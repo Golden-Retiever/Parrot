@@ -17,6 +17,7 @@ namespace Platform.DeviceAccess.Transfer
 
         private string ipAddress = "127.0.0.1";
         private int port = 502;
+        private int cfgTimeout = 500;
 
         /// <summary>是否已连接</summary>
         internal bool ConnectState { get; set; } = false;
@@ -33,6 +34,7 @@ namespace Platform.DeviceAccess.Transfer
                     {
                         case "IP": ipAddress = item.PropValue.Trim(); break;
                         case "Port": port = int.Parse(item.PropValue.Trim()); break;
+                        case "Timeout": cfgTimeout = int.Parse(item.PropValue.Trim()); break;
                     }
                 }
                 result.Status = true;
@@ -113,8 +115,8 @@ namespace Platform.DeviceAccess.Transfer
 
                 try
                 {
-                    stream.ReadTimeout = timeout;
-                    stream.WriteTimeout = timeout;
+                    stream.ReadTimeout = cfgTimeout > 0 ? cfgTimeout : timeout;
+                    stream.WriteTimeout = cfgTimeout > 0 ? cfgTimeout : timeout;
 
                     // 发送
                     stream.Write(req.ToArray(), 0, req.Count);

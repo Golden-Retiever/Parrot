@@ -29,6 +29,13 @@ namespace Platform.DeviceAccess.Transfer
             {
                 foreach (var item in props)
                 {
+                    //Timeout:通用配置名,串口没有 Timeout 属性,翻译成 ReadTimeout
+                    if (item.PropName.Trim() == "Timeout")
+                    {
+                        serialPort.ReadTimeout = int.Parse(item.PropValue.Trim())>0 ? int.Parse(item.PropValue.Trim()): 500;
+                        continue;
+                    }
+
                     PropertyInfo pi = serialPort.GetType().GetProperty(item.PropName.Trim(), BindingFlags.Public | BindingFlags.Instance);
                     if (pi == null) continue;
 
