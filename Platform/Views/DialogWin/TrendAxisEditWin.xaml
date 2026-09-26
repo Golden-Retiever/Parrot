@@ -1,0 +1,272 @@
+﻿<Window x:Class="Platform.Views.DialogWin.TrendAxisEditWin"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Platform.Views.DialogWin"
+        xmlns:converter="clr-namespace:Platform.Converter;assembly=Platform.Converter"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        FontFamily="Microsoft YaHei" FontWeight="ExtraLight" FontSize="12"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Title="变量报警条件配置" Height="400" Width="650">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="1"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Platform.CommonResource;component/Styles/ButtonStyles.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/Platform.CommonResource;component/Styles/ComboBoxStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <converter:RowNumberConverter x:Key="rnc"/>
+
+            <Style TargetType="TextBox">
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border BorderBrush="#EEE" BorderThickness="1" CornerRadius="3" MinHeight="26" Background="White" Name="bor">
+                                <ScrollViewer Name="PART_ContentHost" Margin="0"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="bor" Property="BorderBrush" Value="#16a1ff"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="TextBox" x:Key="EditTextBoxStyle">
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border BorderBrush="#EEE" BorderThickness="0" CornerRadius="3" MinHeight="26" Background="Transparent" Name="bor">
+                                <ScrollViewer Name="PART_ContentHost" Margin="0"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="bor" Property="BorderBrush" Value="#16a1ff"/>
+                                    <Setter TargetName="bor" Property="Background" Value="#FFF"/>
+                                    <Setter TargetName="bor" Property="BorderThickness" Value="1"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ToggleButton" x:Key="ChooseButtonStlye">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="#FFF" Name="border">
+                                <TextBlock Text="{TemplateBinding Content}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   Foreground="#888"
+                                   Margin="10,6" TextTrimming="CharacterEllipsis"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#F7F9FA"/>
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#F7F9FA"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="#F7F9FA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition/>
+            <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
+
+        <!--标题-->
+        <TextBlock Text="{Binding Trend.TrendName,StringFormat={}{0}-纵轴配置}" VerticalAlignment="Center" FontSize="15" Foreground="#BBB" Margin="10,0"/>
+
+        <!--窗口关闭的按钮-->
+        <Button VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource WindowControlButtonStyle}" WindowChrome.IsHitTestVisibleInChrome="True" Margin="10,0"  Content="&#xe653;" FontFamily="{StaticResource Iconfont}" Width="30" Height="30" Click="BtnCancel_Click">
+        </Button>
+
+        <!--纵轴集合显示-->
+        <Grid Margin="5" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Border Background="#409EFE" />
+            <Border Background="#9FFF" Grid.Row="1"/>
+            <Grid TextBlock.Foreground="White">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="40"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="序号" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <TextBlock Text="纵轴基本信息" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+                <TextBlock Text="间隔线" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <TextBlock Text="预警线" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <TextBlock Text="操作" Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Grid>
+
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding Trend.AxisList}" AlternationCount="1000">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <Border Background="#EEE" Grid.Row="1" Height="1" Grid.ColumnSpan="5" VerticalAlignment="Bottom"/>
+                            <!--序号-->
+                            <TextBlock Text="{Binding Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}, Converter={StaticResource rnc}}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+                            <!--纵轴的基本信息-->
+                            <TextBlock Text="纵轴名称/显示" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0"/>
+                            <TextBox Text="{Binding Title}" Grid.Column="1" Margin="88,0,5,0" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsShowTitle}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10,0"/>
+                            <CheckBox IsChecked="{Binding IsShowSeperator}" Grid.Column="2" Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+                            <!--预警线的列表 下拉-->
+                            <ToggleButton Grid.Column="3" Grid.RowSpan="2" Height="28" Style="{StaticResource ChooseButtonStlye}" Content="{Binding SectionValues}" Name="btnWarning"/>
+
+                            <!--删除纵轴-->
+                            <TextBlock Grid.Column="4" Grid.RowSpan="2" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Hyperlink TextDecorations="None" CommandParameter="{Binding}" Command="{Binding DataContext.Trend.DeleteAxisCommand,RelativeSource={RelativeSource AncestorType=Window}}">&#xe653;</Hyperlink>
+                            </TextBlock>
+
+
+                            <!--纵轴的更多信息-->
+                            <Grid Grid.Row="1" Grid.Column="1" Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="45"/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="42"/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="55"/>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="55"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="最小值" Grid.Column="0" Grid.Row="1" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                <TextBox Text="{Binding Minimum}" Grid.Column="1" Grid.Row="1" Margin="1,2" HorizontalContentAlignment="Center" Style="{StaticResource EditTextBoxStyle}"/>
+                                <TextBlock Text="最大值" Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" Margin="2,0"/>
+                                <TextBox Text="{Binding Maximum}" Grid.Column="3" Grid.Row="1" Margin="1,2" HorizontalContentAlignment="Center" Style="{StaticResource EditTextBoxStyle}"/>
+
+                                <TextBlock Text="呈现位置" Grid.Column="4" Grid.Row="1" VerticalAlignment="Center" Margin="2,0"/>
+                                <ComboBox SelectedValue="{Binding Position}" Grid.Column="5" Margin="1,2" Style="{StaticResource PropComboBoxStyle}" Grid.Row="1" BorderThickness="0">
+                                    <ComboBox.ItemsSource>
+                                        <x:Array Type="sys:String">
+                                            <sys:String>Left</sys:String>
+                                            <sys:String>Right</sys:String>
+                                        </x:Array>
+                                    </ComboBox.ItemsSource>
+                                </ComboBox>
+
+                                <TextBlock Text="标签格式" Grid.Column="6" Grid.Row="1" Margin="2,0" VerticalAlignment="Center"/>
+                                <ComboBox SelectedValue="{Binding LabelFormater}" Grid.Column="7" Grid.Row="1" Margin="1,2" Style="{StaticResource PropComboBoxStyle}" BorderThickness="0">
+                                    <ComboBox.ItemsSource>
+                                        <x:Array Type="sys:String">
+                                            <sys:String>00</sys:String>
+                                        </x:Array>
+                                    </ComboBox.ItemsSource>
+                                </ComboBox>
+                            </Grid>
+
+                            <!--预警线的列表，建议放在数据模板中，对应一个子项的预警线集合-->
+                            <!--数据库对应的是AxisList的子项：TrendAxisModel-->
+                            <Popup StaysOpen="False" IsOpen="{Binding ElementName=btnWarning,Path=IsChecked}" AllowsTransparency="True" PlacementTarget="{Binding ElementName=btnWarning}">
+                                <Border Margin="5" Width="180" MaxHeight="400" Background="#DFFF" CornerRadius="5">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="Gray" ShadowDepth="0" BlurRadius="10" Opacity="0.2"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="30"/>
+                                            <RowDefinition/>
+                                            <RowDefinition Height="35"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="40"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Background="White" CornerRadius="5,5,0,0" Grid.ColumnSpan="3"/>
+                                        <TextBlock Text="预警值" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="颜色" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="1"/>
+                                        <TextBlock Text="操作" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="2"/>
+
+                                        <Button Command="{Binding AddSectionCommand}" Content="添加预警线" Grid.Row="2" Grid.ColumnSpan="3" Margin="4" Style="{StaticResource NormalButtonStyle}" Background="#409EFE"/>
+
+                                        <ItemsControl Grid.ColumnSpan="3" Grid.Row="1" ItemsSource="{Binding SectionList}" Margin="3,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition/>
+                                                            <ColumnDefinition Width="1.5*"/>
+                                                            <ColumnDefinition Width="40"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBox Text="{Binding Value}" TextAlignment="Center"/>
+
+                                                        <ComboBox SelectedValue="{Binding Color}" Grid.Column="1"  ItemsSource="{Binding DataContext.BrushList, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                          Style="{StaticResource PropComboBoxStyle}"
+                                                          SelectedValuePath=".">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Height="22">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="20"/>
+                                                                            <ColumnDefinition/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Border Background="{Binding}" Width="12" Height="12"/>
+                                                                        <TextBlock Text="{Binding}" Grid.Column="1" VerticalAlignment="Center" Margin="3,0" TextTrimming="CharacterEllipsis"/>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+
+                                                        <TextBlock Grid.Column="4" Grid.RowSpan="2" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                    <Hyperlink TextDecorations="None" CommandParameter="{Binding}" Command="{Binding DataContext.DeleteSectionCommand,RelativeSource={RelativeSource AncestorType=Popup}}">&#xe653;</Hyperlink>
+                                                        </TextBlock>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
+        <!--添加纵轴的按钮-->
+        <Button Command="{Binding Trend.AddAxisCommand}" Content="添加纵轴" Grid.Row="2" Width="120" Margin="0,4" Style="{StaticResource NormalButtonStyle}" Background="Orange"/>
+    </Grid>
+</Window>

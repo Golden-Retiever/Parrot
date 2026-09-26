@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Fonts\digital_display.ttf" />
+    <None Remove="Fonts\iconfont.ttf" />
+    <None Remove="Images\Components\air_compressor.png" />
+    <None Remove="Images\Components\can.png" />
+    <None Remove="Images\Components\dryer.png" />
+    <None Remove="Images\Components\dryer1.png" />
+    <None Remove="Images\Components\filter.png" />
+    <None Remove="Images\Components\horizontalpipe.png" />
+    <None Remove="Images\Components\rt_joints.png" />
+    <None Remove="Images\Components\tee_joints.png" />
+    <None Remove="Images\Components\verticalpipe.png" />
+    <None Remove="Images\Logo.png" />
+    <None Remove="Images\right.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Fonts\digital_display.ttf" />
+    <Resource Include="Fonts\iconfont.ttf" />
+    <Resource Include="Images\Components\air_compressor.png" />
+    <Resource Include="Images\Components\can.png" />
+    <Resource Include="Images\Components\dryer.png" />
+    <Resource Include="Images\Components\dryer1.png" />
+    <Resource Include="Images\Components\filter.png" />
+    <Resource Include="Images\Components\horizontalpipe.png" />
+    <Resource Include="Images\Components\rt_joints.png" />
+    <Resource Include="Images\Components\tee_joints.png" />
+    <Resource Include="Images\Components\verticalpipe.png" />
+    <Resource Include="Images\Logo.png" />
+    <Resource Include="Images\right.png" />
+  </ItemGroup>
+
+</Project>

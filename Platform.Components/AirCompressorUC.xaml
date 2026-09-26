@@ -1,0 +1,257 @@
+﻿<local:ComponentBase x:Class="Platform.Components.AirCompressorUC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Platform.Components"
+             mc:Ignorable="d" 
+             x:Name="component"
+             xmlns:converter="clr-namespace:Platform.Components.Converter"
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <local:ComponentBase.Resources>
+        <BooleanToVisibilityConverter x:Key="b2v"/>
+        <converter:InfoButtonVisibilityValueConverter x:Key="ibv"/>
+
+        <Style TargetType="Button" x:Key="DeleteButtonStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="#55000000" Name="root" CornerRadius="11">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="root" Property="Background" Value="#88000000"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ControlTemplate TargetType="ToggleButton" x:Key="InfoButtonTemplate">
+            <Border Background="#F7F9FA" CornerRadius="100" BorderThickness="1" BorderBrush="#DDD" Name="border">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="15" Color="#16a1ff" ShadowDepth="0" Opacity="0.1"/>
+                </Border.Effect>
+                <TextBlock Text="{TemplateBinding Content}" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="#EEE"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+    </local:ComponentBase.Resources>
+    <Grid>
+        <!--2行4列  其中第2行，只是起到隔开作用-->
+        <Grid Background="Transparent" Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition Height="0.1*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="0.9*"/>
+            </Grid.ColumnDefinitions>
+
+            <!--grid边框效果 投影 阴影-->
+            <Grid.Effect>
+                <DropShadowEffect BlurRadius="15" Color="#16a1ff" ShadowDepth="0" Opacity="0.1" x:Name="dse"/>
+            </Grid.Effect>
+
+            <Border Background="#EEE" CornerRadius="5" Grid.RowSpan="2" Grid.ColumnSpan="4"/>
+            <Border Background="#9CCC" CornerRadius="0,0,5,5" Grid.Row="1" Grid.ColumnSpan="4"/>
+            <Border Background="#9DDD" Grid.Column="3" CornerRadius="0,5,0,0"/>
+
+            <!--第一行 第一列-->
+            <Border Background="#EEE" CornerRadius="5,0,0,0" Name="grid">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition Height="0.2*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.1*"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="0.15*"/>
+                        <ColumnDefinition Width="0.1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!--第一行 只是隔开-->
+                    <!--第二行-->
+                    <Border CornerRadius="50" Background="#16a1ff" Height="{Binding RelativeSource={RelativeSource self},Path=ActualWidth}" Grid.Row="1" Grid.Column="2" VerticalAlignment="Top"/>
+
+                    <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
+                        <Border.Background>
+                            <VisualBrush TileMode="FlipY" Viewport="-0.2,0,1.3,0.09">
+                                <VisualBrush.Visual>
+                                    <Path Data="M0,0 0,40 40 40" Stroke="#16a1ff" StrokeThickness="5"/>
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </Border.Background>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!--第一行 第二列-->
+            <Border Background="#16a1ff" Width="1" Grid.Column="1"/>
+
+            <!--第一行 第三列-->
+            <Border Grid.Column="2" RenderTransformOrigin="0.5,0.5">
+                <Border.Background>
+                    <!--将背景设置为第一列的border 感觉就是将第一列复制到这里来了-->
+                    <VisualBrush Visual="{Binding ElementName=grid}" TileMode="None">
+                    </VisualBrush>
+                </Border.Background>
+                <!--旋转-->
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="-1"/>
+                </Border.RenderTransform>
+            </Border>
+
+            <!--第一行 第四列-->
+            <Grid Grid.Column="3" Height="{Binding RelativeSource={RelativeSource Self},Path=ActualWidth}" 
+         VerticalAlignment="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="0.2*"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="0.2*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="0.2*"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="0.2*"/>
+                </Grid.RowDefinitions>
+                <Border Background="DeepSkyBlue" CornerRadius="5" Grid.Column="1" Grid.Row="1" Opacity="0.8"/>
+            </Grid>
+        </Grid>
+
+        <!--选中了边框-->
+        <Grid Visibility="{Binding IsSelected,Converter={StaticResource b2v}, ElementName=component}">
+            <Rectangle Stroke="#AAA" StrokeDashArray="3,3" RadiusX="5" RadiusY="5"/>
+
+            <Ellipse Width="10" Height="10" Fill="White" VerticalAlignment="Center" HorizontalAlignment="Right" Stroke="#AAA" Margin="-5" Cursor="SizeWE" MouseLeftButtonDown="Ellipse_MouseLeftButtonDown" MouseMove="Ellipse_MouseMove" MouseLeftButtonUp="Ellipse_MouseLeftButtonUp"/>
+
+            <Ellipse Width="10" Height="10" Fill="White" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+Stroke="#AAA" Margin="-5" Cursor="SizeNWSE"  MouseLeftButtonDown="Ellipse_MouseLeftButtonDown"  MouseMove="Ellipse_MouseMove" MouseLeftButtonUp="Ellipse_MouseLeftButtonUp"/>
+
+            <Ellipse Width="10" Height="10" Fill="White" VerticalAlignment="Bottom" HorizontalAlignment="Center"  Stroke="#AAA" Margin="-5" Cursor="SizeNS"  MouseLeftButtonDown="Ellipse_MouseLeftButtonDown" MouseMove="Ellipse_MouseMove" MouseLeftButtonUp="Ellipse_MouseLeftButtonUp"/>
+        </Grid>
+
+        <!--右上角删除按钮-->
+        <Button Margin="0,0,-25,0" Visibility="{Binding IsSelected,Converter={StaticResource b2v}, ElementName=component}" VerticalAlignment="Top" HorizontalAlignment="Right" Style="{StaticResource DeleteButtonStyle}" Height="22" Width="22" Click="Delete_Click">
+            <Grid Width="12" Height="12">
+                <Path Data="M0 0 10 10M10 0 0 10" Stroke="Red" StrokeThickness="1" Stretch="Fill"/>
+            </Grid>
+        </Button>
+
+        <Line X1="0" Y1="15" X2="10" Y2="0" Stroke="Red" StrokeThickness="1" Margin="20,-5" Visibility="{Binding IsWarning,RelativeSource={RelativeSource AncestorType=UserControl},Converter={StaticResource b2v}}"/>
+        
+        <Canvas>
+            <!--#region 报警消息-->
+            <Border MinWidth="100" MaxWidth="250" MaxHeight="50" Canvas.Bottom="{Binding RelativeSource={RelativeSource AncestorType=UserControl},Path=ActualHeight}" Margin="0,0,0,5" Background="#6F00" CornerRadius="5" BorderThickness="1" BorderBrush="#8F00" Visibility="{Binding IsWarning,RelativeSource={RelativeSource AncestorType=UserControl},Converter={StaticResource b2v}}">
+                <TextBlock TextWrapping="Wrap" TextTrimming="WordEllipsis" LineHeight="20" Margin="5,5,5,0" Foreground="White">
+                  <Hyperlink TextDecorations="None" Command="{Binding AlarmDetailCommand,RelativeSource={RelativeSource AncestorType=UserControl}}">[详情]</Hyperlink>
+                  <Run Text="{Binding DeviceName}"/>
+                  <Run Text="-"/>
+                  <Run Text="{Binding WarningMessage,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                </TextBlock>
+            </Border>
+            <!--#endregion-->
+            
+            <!--#region 显示设备变量-->
+            <ToggleButton Width="18" Height="18" Name="btnInfo" Content="i" Canvas.Left="{Binding RelativeSource={RelativeSource AncestorType=UserControl},Path=ActualWidth}" Canvas.Bottom="0" Margin="-2,0,0,7" Template="{StaticResource InfoButtonTemplate}">
+                <ToggleButton.Visibility>
+                    <MultiBinding Converter="{StaticResource ibv}">
+                        <!--是否监控-->
+                        <Binding RelativeSource="{RelativeSource AncestorType=UserControl}" Path="IsMonitor"/>
+                        <!--变量个数-->
+                        <Binding RelativeSource="{RelativeSource AncestorType=UserControl}" Path="VarList.Count"/>
+                    </MultiBinding>
+                </ToggleButton.Visibility>
+            </ToggleButton>
+            <!--变量列表数据-->
+            <Border Width="120" Canvas.Left="{Binding RelativeSource={RelativeSource AncestorType=UserControl},Path=ActualWidth}" Canvas.Top="{Binding RelativeSource={RelativeSource AncestorType=UserControl},Path=ActualHeight}" Margin="20,-25,0,0" CornerRadius="5" BorderThickness="1" BorderBrush="#EEE" Visibility="{Binding ElementName=btnInfo,Path=IsChecked,Converter={StaticResource b2v}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="22"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Border Background="#AEEE" Grid.RowSpan="2">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="15" Color="#16a1ff" ShadowDepth="0" Opacity="0.2"/>
+                        </Border.Effect>
+                    </Border>
+                    <TextBlock Text="实时变量数据" VerticalAlignment="Bottom"  HorizontalAlignment="Center" Foreground="#888"/>
+                    <ItemsControl ItemsSource="{Binding VarList,RelativeSource={RelativeSource AncestorType=UserControl}}"  Margin="5" Grid.Row="1">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#9FFF" CornerRadius="3" Margin="0,1">
+                                    <Grid Height="22">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding VarName}"  VerticalAlignment="Center"  HorizontalAlignment="Center" FontSize="11" Foreground="#AAA" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ReadValue}"  Grid.Column="1" FontSize="11" VerticalAlignment="Center" Foreground="#555" FontWeight="Normal"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
+            <!--#endregion-->
+
+            <!--#region 手动控制-->
+            <ToggleButton Width="18" Height="18" Name="btnControl" Content="···" Canvas.Left="{Binding RelativeSource={RelativeSource AncestorType=UserControl},Path=ActualWidth}" Canvas.Bottom="28" Margin="-2,5,0,0" Template="{StaticResource InfoButtonTemplate}">
+                <ToggleButton.Visibility>
+                    <MultiBinding Converter="{StaticResource ibv}">
+                        <Binding RelativeSource="{RelativeSource AncestorType=UserControl}" Path="IsMonitor"/>
+                        <Binding RelativeSource="{RelativeSource AncestorType=UserControl}" Path="ManualControlList.Count"/>
+                    </MultiBinding>
+                </ToggleButton.Visibility>
+            </ToggleButton>
+            <!--手动控制列表-->
+            <Border Width="120" Canvas.Left="{Binding RelativeSource={RelativeSource AncestorType=UserControl},Path=ActualWidth}" Canvas.Bottom="0" Margin="20,0,0,27" CornerRadius="5" BorderThickness="1" BorderBrush="#EEE" Visibility="{Binding ElementName=btnControl,Path=IsChecked,Converter={StaticResource b2v}}">
+                <Grid>
+                    <Border Background="#AEEE">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="15" Color="#16a1ff" ShadowDepth="0" Opacity="0.2"/>
+                        </Border.Effect>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=UserControl},Path=ManualControlList}" Margin="5">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Height="24" Margin="0,1">
+                                    <Button Content="{Binding ControlName}" Foreground="#666" FontSize="11.5" Command="{Binding ManualControlCommand,RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="#9FFF" CornerRadius="5" Name="border">
+                                                    <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="border" Property="Background" Value="#DFFF"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
+            <!--#endregion-->
+        </Canvas>
+    </Grid>
+</local:ComponentBase>

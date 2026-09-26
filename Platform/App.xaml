@@ -1,0 +1,16 @@
+﻿<prism:PrismApplication x:Class="Platform.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Platform"
+             xmlns:prism="http://prismlibrary.com/">
+    <prism:PrismApplication.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary>
+                    <FontFamily x:Key="Iconfont">pack://application:,,,/Platform.CommonResource;component/Fonts/#iconfont</FontFamily>
+                    <FontFamily x:Key="DigitalDisplay">pack://application:,,,/Platform.CommonResource;component/Fonts/#Digital Display</FontFamily>
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </prism:PrismApplication.Resources>
+    </prism:PrismApplication>
