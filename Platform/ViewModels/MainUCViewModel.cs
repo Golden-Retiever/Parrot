@@ -555,8 +555,8 @@ namespace Platform.ViewModels
                     object oldReadValue = deviceVarModel.ReadValue;
                     deviceVarModel.ReadValue = variableProp.ReadValue;//协议层解析的结果放到变量模型
 
-                    //偏移量换算
-                    if (deviceVarModel.VarType != "Boolean")
+                    //偏移量换算(String 是文本,不参与数值换算)
+                    if (deviceVarModel.VarType != "Boolean" && deviceVarModel.VarType != "String")
                     {
                         string exp = $"{deviceVarModel.ReadValue}*{deviceVarModel.Modulus}+{deviceVarModel.Offset}";
                         deviceVarModel.ReadValue = computeDt.Compute(exp, "");//将计算结果重新赋值

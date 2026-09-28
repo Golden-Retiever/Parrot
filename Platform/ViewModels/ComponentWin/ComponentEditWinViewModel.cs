@@ -433,7 +433,7 @@ namespace Platform.ViewModels.ComponentWin
         /// </summary>
         public List<string> TypeList { get; } = new List<string>
         {
-            "Boolean", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Single", "Double"
+            "Boolean", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Single", "Double", "String"
         };
 
         private List<PropEntity> PropEntityList;//数据库中所有属性
