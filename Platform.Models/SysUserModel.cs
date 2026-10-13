@@ -44,10 +44,25 @@ namespace Platform.Models
             }
         }
 
+        private int _role;
+
         /// <summary>
-        /// 是否管理员
+        /// 角色:0=普通,1=二级管理员,2=一级管理员
         /// </summary>
-        public bool IsAdmin { get; set; }
+        public int Role
+        {
+            get { return _role; }
+            set
+            {
+                if (SetProperty(ref _role, value))
+                    RaisePropertyChanged(nameof(RoleText));//升降级后行内角色文本同步刷新
+            }
+        }
+
+        /// <summary>
+        /// 角色显示文本(配置页只读列)
+        /// </summary>
+        public string RoleText => Role switch { 2 => "一级管理员", 1 => "二级管理员", _ => "非管理员" };
 
         /// <summary>
         /// 真实姓名

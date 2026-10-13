@@ -37,6 +37,17 @@ namespace Platform.Models
         /// </summary>
         public string VarAddress { get; set; }
 
+        private bool _isRawFrame;
+
+        /// <summary>
+        /// 是否裸帧(勾选=地址格填完整请求帧文本,原样收发;不勾=按结构化地址解析)
+        /// </summary>
+        public bool IsRawFrame
+        {
+            get { return _isRawFrame; }
+            set { SetProperty(ref _isRawFrame, value); }
+        }
+
         //从设备读取的数据
         private object _readValue = 0;
 

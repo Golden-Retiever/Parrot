@@ -86,7 +86,7 @@ namespace Platform.DeviceAccess.Execute
                     foreach (var varProp in group.VarPropList)
                     {
                         //取单个变量的寄存器的起始相对地址 —— 取数据是按字节进行
-                        int relativeAddr = int.Parse(varProp.VarAddr.Substring(1)) - 1 - group.StartAddress;
+                        int relativeAddr = int.Parse(varProp.VarAddr.Substring(1)) - group.StartAddress;
                         //取单个变量的读取寄存器个数
                         int count = varProp.Count <= 0 ? 1 : varProp.Count;
 
@@ -137,6 +137,34 @@ namespace Platform.DeviceAccess.Execute
             return SendAndReceive(slaveId, pdu, respDataLen);
         }
         #endregion
+        #endregion
+
+        #region 裸帧
+        /// <summary>裸帧收发:帧文本按空格切十六进制(从站+功能码+地址+数量/值,无CRC)原样收发,MBAP头由 SendAndReceive 统一组装。读功能码按相应长度解析返回,写功能码收到响应即成返回 null</summary>
+        public override object SendRaw(string frameText, Type valueType)
+        {
+            var f = frameText.Split(new[] { ' ', '\t', '\u3000', '\u00A0' }, StringSplitOptions.RemoveEmptyEntries)//半角/全角/不换行空格、Tab 都认作分隔
+                             .Select(b => byte.Parse(b, System.Globalization.NumberStyles.HexNumber)).ToList();
+            int n = f[4] * 256 + f[5];//帧内数量
+            if (f[1] is 0x01 or 0x02 or 0x03 or 0x04)//读
+            {
+                List<byte> data = SendAndReceive(f[0], f.Skip(1).ToList(), (f[1] is 0x01 or 0x02) ? (n + 7) / 8 : n * 2);//按功能码定相应长度
+                byte[] raw;
+                if (f[1] is 0x01 or 0x02)//位区:数据段展开成位,取前n位
+                {
+                    var bits = new List<byte>(data.Count * 8);
+                    foreach (var b in data)
+                        for (int i = 0; i < 8; i++)
+                            bits.Add((byte)((b >> i) & 1));
+                    raw = bits.GetRange(0, n).ToArray();
+                }
+                else//寄存器区:整段转端后转值
+                    raw = ConvertEndian(data.ToArray(), valueType, GetProp("DeviceEndian") == "Little", GetProp("WordOrder") == "LowFirst");
+                return ByteConvert.ToValues(raw, valueType, 1);
+            }
+            SendAndReceive(f[0], f.Skip(1).ToList(), 0);//写:收到正常响应即完成
+            return null;
+        }
         #endregion
 
         #region 写
@@ -263,7 +291,7 @@ namespace Platform.DeviceAccess.Execute
         #endregion
         #endregion
 
-        #region 分组
+        #region 分组，地址分析
         /// <summary>
         /// 变量分组(同功能码 + 地址邻近的并为一帧读)
         /// </summary>
@@ -326,9 +354,7 @@ namespace Platform.DeviceAccess.Execute
             target.StartAddress = newStart;
             target.Count = newEnd - newStart;
         }
-        #endregion
 
-        #region 地址分析
         /// <summary>
         ///  解析单个变量的地址配置，生成用于协议通信的组地址对象
         /// </summary>
@@ -378,7 +404,7 @@ namespace Platform.DeviceAccess.Execute
                     throw new Exception($"不支持的地址格式：{addr}");
                 }
 
-                ma.StartAddress = int.Parse(addr.Substring(1)) - 1;
+                ma.StartAddress = int.Parse(addr.Substring(1));
 
                 result.Status = true;
                 result.Msg = "没有错误";

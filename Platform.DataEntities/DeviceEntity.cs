@@ -21,6 +21,11 @@ namespace Platform.DataEntities
         public string DeviceNum { get; set; }
 
         /// <summary>
+        /// 轮询间隔(毫秒):本设备变量读取节奏,0/空按500兜底
+        /// </summary>
+        public string RefreshRate { get; set; } = "500";
+
+        /// <summary>
         /// 所属组件Id
         /// </summary>
         public int ComponentId { get; set; }

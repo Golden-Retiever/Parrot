@@ -8,7 +8,7 @@
              xmlns:prism="http://prismlibrary.com/"
              prism:ViewModelLocator.AutoWireViewModel="True"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="800" d:DesignWidth="1400">
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -29,11 +29,11 @@
                                     <ColumnDefinition Width="130" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Border Background="White" CornerRadius="5" Margin="5"/>
+                                <Border Background="{DynamicResource App.Background}" CornerRadius="5" Margin="5"/>
                                 <TabPanel x:Name="HeaderPanel" Grid.Row="0" Panel.ZIndex="1"
-                                         Margin="5" IsItemsHost="True"
-                                         KeyboardNavigation.TabIndex="1"
-                                         Background="Transparent" />
+                                          Margin="5" IsItemsHost="True"
+                                          KeyboardNavigation.TabIndex="1"
+                                          Background="Transparent" />
                                 <Border x:Name="Border" Grid.Column="1">
                                     <ContentPresenter x:Name="PART_SelectedContentHost" Margin="4" ContentSource="SelectedContent" />
                                 </Border>
@@ -44,13 +44,14 @@
             </Style>
 
             <Style TargetType="TabItem">
+                <Setter Property="Foreground" Value="{DynamicResource App.Foreground}"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TabItem">
                             <Border x:Name="Border" Margin="2" CornerRadius="5" Background="Transparent">
                                 <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center"
-                                               HorizontalAlignment="Center" ContentSource="Header" 
-                                               Margin="12,6" RecognizesAccessKey="True" />
+                                                  HorizontalAlignment="Center" ContentSource="Header" 
+                                                  Margin="12,6" RecognizesAccessKey="True" />
                             </Border>
 
                             <ControlTemplate.Triggers>
@@ -68,15 +69,16 @@
             </Style>
 
             <Style TargetType="TextBox">
+                <Setter Property="Foreground" Value="{DynamicResource App.Foreground}"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TextBox">
-                            <Border BorderBrush="#EEE" BorderThickness="1" CornerRadius="3" MinHeight="26" Background="#DFFF" Name="bor">
+                            <Border BorderBrush="{DynamicResource App.Border}" BorderThickness="1" CornerRadius="3" MinHeight="26" Background="Transparent" Name="bor">
                                 <Grid>
                                     <TextBlock Text="{TemplateBinding Tag}" VerticalAlignment="Center" Margin="5,0" 
-                                            FontSize="11" Foreground="#BBB" Name="mark"
-                                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                               FontSize="11" Foreground="{DynamicResource App.ForegroundSecondary}" Name="mark"
+                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                             Visibility="Collapsed"/>
                                     <ScrollViewer Name="PART_ContentHost" Margin="5,0"/>
                                 </Grid>
@@ -100,12 +102,12 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Margin="80,10,10,10">
+    <Grid Margin="80,10,10,10" Background="{DynamicResource App.Background}">
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Border BorderBrush="#EEE" BorderThickness="0,0,0,1"/>
+        <Border BorderBrush="{DynamicResource App.Border}" BorderThickness="0,0,0,1"/>
 
         <Border Width="3" Height="15" Background="Gold" HorizontalAlignment="Left" CornerRadius="2"/>
         <TextBlock Text="系统平台配置选项" VerticalAlignment="Center" HorizontalAlignment="Left"
@@ -115,7 +117,7 @@
             </TextBlock.Effect>
         </TextBlock>
 
-        <Border Background="#5FFF" Grid.Row="1"  CornerRadius="0,0,5,5"/>
+        <Border Background="Transparent" Grid.Row="1"  CornerRadius="0,0,5,5"/>
 
         <TabControl Grid.Row="1" TabStripPlacement="Left">
             <TabItem Header="监控配置">
@@ -137,30 +139,30 @@
                                         <RowDefinition Height="30"/>
                                         <RowDefinition Height="15"/>
                                     </Grid.RowDefinitions>
-                                    <TextBlock Text="{Binding Header}" FontSize="15" Foreground="#555"/>
-                                    <TextBlock Text="{Binding Description}" FontSize="12" Grid.Row="1" Foreground="#AAA"/>
+                                    <TextBlock Text="{Binding Header}" FontSize="15" Foreground="{DynamicResource App.Foreground}"/>
+                                    <TextBlock Text="{Binding Description}" FontSize="12" Grid.Row="1" Foreground="{DynamicResource App.ForegroundSecondary}"/>
                                     <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                        <TextBlock Text="选择设备" Foreground="#999" VerticalAlignment="Center"/>
+                                        <TextBlock Text="选择设备" Foreground="{DynamicResource App.ForegroundSecondary}" VerticalAlignment="Center"/>
                                         <ComboBox Width="220" Style="{StaticResource PropComboBoxStyle}" Margin="5,0"
                                                 SelectedValue="{Binding DeviceNum}"
                                                 SelectedValuePath="DeviceNum"
                                                 DisplayMemberPath="DeviceName"
                                                 ItemsSource="{Binding DeviceList}"/>
-                                        <TextBlock Text="选择变量" Margin="10,0,5,0" Foreground="#999" VerticalAlignment="Center"/>
+                                        <TextBlock Text="选择变量" Margin="10,0,5,0" Foreground="{DynamicResource App.ForegroundSecondary}" VerticalAlignment="Center"/>
                                         <ComboBox Width="220" Style="{StaticResource PropComboBoxStyle}" 
                                                 SelectedValue="{Binding VarNum}"
                                                 SelectedValuePath="VarNum"
                                                 DisplayMemberPath="VarName"
                                                 ItemsSource="{Binding VarList}"/>
                                     </StackPanel>
-                                    <Border BorderThickness="0,0,0,1" BorderBrush="#DDD" Grid.Row="3" Grid.ColumnSpan="2" SnapsToDevicePixels="True" VerticalAlignment="Center" Margin="-10,0">
+                                    <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource App.Border}" Grid.Row="3" Grid.ColumnSpan="2" SnapsToDevicePixels="True" VerticalAlignment="Center" Margin="-10,0">
                                     </Border>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="30" Width="100" Grid.Column="1" Style="{StaticResource NormalButtonStyle}" Command="{Binding SaveMonitorSetsCommand}">
+                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Height="30" Width="100" Grid.Column="1" Style="{StaticResource NormalButtonStyle}" Command="{Binding SaveMonitorSetsCommand}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xe63c;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" Margin="3,0"/>
                             <TextBlock Text="保存监测配置" VerticalAlignment="Center" Margin="3,0"/>
@@ -186,8 +188,8 @@
                             <RowDefinition Height="30"/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <TextBlock Text="系统注册用户" FontSize="15" Foreground="#555"/>
-                        <Border BorderThickness="0,0,0,1" BorderBrush="#DDD" Grid.Row="1" SnapsToDevicePixels="True" VerticalAlignment="Center" Margin="-10,5"/>
+                        <TextBlock Text="系统注册用户" FontSize="15" Foreground="{DynamicResource App.Foreground}"/>
+                        <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource App.Border}" Grid.Row="1" SnapsToDevicePixels="True" VerticalAlignment="Center" Margin="-10,5"/>
                         <Button VerticalAlignment="Center" HorizontalAlignment="Right" Height="30" Style="{StaticResource WindowControlButtonStyle}" Command="{Binding AddUserCommand}">
                             <TextBlock Margin="10,0">
                               <Run Text="&#xe8fe;" FontFamily="{StaticResource Iconfont}"/>
@@ -196,9 +198,10 @@
                         </Button>
 
                         <Border Grid.Row="2" Background="#22409EFE" CornerRadius="3" Margin="0,1"/>
-                        <Grid Grid.Row="2" TextBlock.Foreground="#999">
+                        <Grid Grid.Row="2" TextBlock.Foreground="{DynamicResource App.ForegroundSecondary}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="40"/>
+                                <ColumnDefinition/>
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
@@ -211,11 +214,13 @@
                             <TextBlock Text="用户类型" Grid.Column="3" HorizontalAlignment="Center"/>
                             <TextBlock Text="部门" Grid.Column="4" HorizontalAlignment="Center"/>
                             <TextBlock Text="操作" Grid.Column="5" HorizontalAlignment="Center"/>
+                            <TextBlock Text="升降级" Grid.Column="6" HorizontalAlignment="Center"/>
                         </Grid>
 
                         <ItemsControl Grid.Row="3" ItemsSource="{Binding UserList}" AlternationCount="1000">
                             <ItemsControl.Resources>
                                 <Style TargetType="TextBox">
+                                    <Setter Property="Foreground" Value="{DynamicResource App.Foreground}"/>
                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                     <Setter Property="VerticalContentAlignment" Value="Center"/>
                                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -226,7 +231,7 @@
                                                       CornerRadius="3" MinHeight="28" Background="Transparent" Name="bor">
                                                     <Grid>
                                                         <TextBlock Text="{TemplateBinding Tag}" VerticalAlignment="Center" Margin="5,0" 
-                                             FontSize="11" Foreground="#BBB" Name="mark"
+                                             FontSize="11" Foreground="{DynamicResource App.ForegroundSecondary}" Name="mark"
                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                              Visibility="Collapsed"/>
                                                         <ScrollViewer Name="PART_ContentHost" Margin="0"/>
@@ -235,7 +240,7 @@
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsKeyboardFocused" Value="True">
                                                         <Setter TargetName="bor" Property="BorderBrush" Value="#16a1ff"/>
-                                                        <Setter TargetName="bor" Property="Background" Value="#DFFF"/>
+                                                        <Setter TargetName="bor" Property="Background" Value="Transparent"/>
                                                     </Trigger>
                                                     <DataTrigger Binding="{Binding Path=Text,RelativeSource={RelativeSource Mode=Self}}" Value="">
                                                         <Setter Property="Visibility" TargetName="mark" Value="Visible"/>
@@ -249,7 +254,7 @@
 
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Height="35" Background="White">
+                                    <Grid Height="35" Background="{DynamicResource App.Background}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="40"/>
                                             <ColumnDefinition/>
@@ -257,24 +262,28 @@
                                             <ColumnDefinition/>
                                             <ColumnDefinition/>
                                             <ColumnDefinition/>
+                                            <ColumnDefinition/>
                                         </Grid.ColumnDefinitions>
-                                        <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Grid.ColumnSpan="6" Name="grid"/>
-                                        <TextBlock Text="{Binding  Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}, Converter={StaticResource rnc},  StringFormat={}{0:00}}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#888"/>
+                                        <Border BorderBrush="{DynamicResource App.Border}" BorderThickness="0,0,0,1" Grid.ColumnSpan="7" Name="grid"/>
+                                        <TextBlock Text="{Binding  Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}, Converter={StaticResource rnc},  StringFormat={}{0:00}}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
                                         <TextBox Text="{Binding Account}" Grid.Column="1"/>
                                         <TextBox Text="{Binding RealName}" Grid.Column="2"/>
-                                        <ComboBox SelectedValue="{Binding IsAdmin}" 
-                                                Grid.Column="3"
-                                                Style="{StaticResource PropComboBoxStyle}"
-                                                VerticalAlignment="Center" Height="26" Margin="5,0"
-                                                ItemsSource="{Binding DataContext.UserTypeList,RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                DisplayMemberPath="TypeName" SelectedValuePath="IsAdmin"/>
+                                        <TextBlock Text="{Binding RoleText}" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/><!--角色只读:升降级走右列,防止二级下拉自封一级-->
                                         <TextBox Text="{Binding Department}" Grid.Column="4"/>
                                         <TextBlock Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                          <Hyperlink Command="{Binding RelativeSource={RelativeSource AncestorType=UserControl},
+                                          <Hyperlink Foreground="{DynamicResource App.ForegroundSecondary}" Command="{Binding RelativeSource={RelativeSource AncestorType=UserControl},
                                               Path=DataContext.ResetPwdCommand}" CommandParameter="{Binding}">重置密码</Hyperlink>
                                           <Run Text=" "/>
-                                          <Hyperlink Command="{Binding RelativeSource={RelativeSource AncestorType=UserControl},
+                                          <Hyperlink Foreground="{DynamicResource App.ForegroundSecondary}" Command="{Binding RelativeSource={RelativeSource AncestorType=UserControl},
                                               Path=DataContext.DelUserCommand}" CommandParameter="{Binding}">删除</Hyperlink>
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   IsEnabled="{Binding DataContext.CanEditRole, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                          <Hyperlink Foreground="{DynamicResource App.ForegroundSecondary}" Command="{Binding RelativeSource={RelativeSource AncestorType=UserControl},
+                                              Path=DataContext.PromoteUserCommand}" CommandParameter="{Binding}">升级</Hyperlink>
+                                          <Run Text=" "/>
+                                          <Hyperlink Foreground="{DynamicResource App.ForegroundSecondary}" Command="{Binding RelativeSource={RelativeSource AncestorType=UserControl},
+                                              Path=DataContext.DemoteUserCommand}" CommandParameter="{Binding}">降级</Hyperlink>
                                         </TextBlock>
                                     </Grid>
                                     <DataTemplate.Triggers>
@@ -287,12 +296,63 @@
                         </ItemsControl>
                     </Grid>
 
-                    <Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="30" Width="100" Grid.Column="1" Style="{StaticResource NormalButtonStyle}" Command="{Binding SaveUserSetsCommand}">
+                    <Button HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0 20 50 0" Height="30" Width="100" Grid.Column="2" Style="{StaticResource NormalButtonStyle}" Command="{Binding SaveUserSetsCommand}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xe63c;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" Margin="3,0"/>
                             <TextBlock Text="保存用户配置" VerticalAlignment="Center" Margin="3,0"/>
                         </StackPanel>
                     </Button>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="基本配置">
+                <Grid>
+                    <!--主题、字体-->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.1*"/>
+                            <ColumnDefinition MinWidth="300"/>
+                            <ColumnDefinition Width="0.3*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="1" Margin="0,20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="0.3*"/>
+                                <RowDefinition Height="0.2*"/>
+                                <RowDefinition Height="0.2*"/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="主题" FontSize="20" Foreground="{DynamicResource App.ForegroundSecondary}"/>
+                                <ComboBox Width="120" Height="50" Margin="70 0"
+                                          Style="{StaticResource PropComboBoxStyle}"
+                                          ItemsSource="{Binding ThemeOptions}"
+                                          SelectedValuePath="Value" SelectedValue="{Binding Setting.Theme}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Width="70" Height="44" CornerRadius="3"
+                                                        Background="{Binding PreviewBackground}"
+                                                        BorderBrush="Gray" BorderThickness="1">
+                                                    <TextBlock Text="字" FontSize="10"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               Foreground="{Binding PreviewForeground}"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <Button Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Center" Height="30" Width="100" Style="{StaticResource NormalButtonStyle}" Command="{Binding SaveSettingCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xe63c;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" Margin="3,0"/>
+                                    <TextBlock Text="保存用户配置" VerticalAlignment="Center" Margin="3,0"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Grid>
                 </Grid>
             </TabItem>
         </TabControl>

@@ -11,7 +11,8 @@ namespace Platform.DeviceAccess.Transfer
     /// </summary>
     internal class TransferModbusTCP : TransferObject, IRequestResponse
     {
-        private static readonly object transLock = new object();
+        //实例锁:不同 IP:端口的传输对象互不阻塞(同一端点的设备本就共用同一传输对象实例,串行不受影响)
+        private readonly object transLock = new object();
         private TcpClient tcpClient;
         private NetworkStream stream;
 
@@ -62,18 +63,24 @@ namespace Platform.DeviceAccess.Transfer
                     int count = 0;
                     while (count < trycount)
                     {
+                        //单次尝试限时 1 秒:对端无响应(丢包/防火墙)时同步 Connect 默认要吃满 ~21 秒 SYN 超时
+                        var client = new TcpClient();
                         try
                         {
-                            tcpClient = new TcpClient();
-                            tcpClient.Connect(ipAddress, port);
-                            stream = tcpClient.GetStream();
-                            break;
+                            if (client.ConnectAsync(ipAddress, port).Wait(1000))
+                            {
+                                tcpClient = client;
+                                stream = tcpClient.GetStream();
+                                break;
+                            }
+                            client.Close();//超时未连上
                         }
-                        catch (SocketException)
+                        catch (AggregateException)//连接被拒等 SocketException 包在里面
                         {
-                            count++;
-                            System.Threading.Thread.Sleep(100);
+                            client.Close();
                         }
+                        count++;
+                        System.Threading.Thread.Sleep(100);
                     }
                     if (tcpClient == null || !tcpClient.Connected) throw new Exception("TCP 连接失败");
                     ConnectState = true;
@@ -135,8 +142,11 @@ namespace Platform.DeviceAccess.Transfer
                 }
                 catch (System.IO.IOException)
                 {
-                    // 断线/超时都标记断开,下次 Connect 重连
+                    //断线/超时都彻底丢弃连接,下次 Connect 真正重连(否则 Connected 标志陈旧,Connect 会"假成功")
                     ConnectState = false;
+                    try { stream?.Close(); tcpClient?.Close(); } catch { }
+                    stream = null;
+                    tcpClient = null;
                     result.Status = false;
                     result.Msg = "接收报文超时或连接中断";
                 }

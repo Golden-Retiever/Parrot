@@ -66,5 +66,16 @@ namespace Platform.DeviceAccess.Execute
         {
             return new Result();
         }
+
+        /// <summary>
+        /// 裸帧收发:完整请求帧文本→值。默认不支持,由具体协议覆写
+        /// </summary>
+        /// <param name="frameText">完整请求帧文本(十六进制,空格分隔)</param>
+        /// <param name="valueType">值类型(读功能码解析用,写传 null)</param>
+        /// <returns>读:解析出的值;写:null</returns>
+        public virtual object SendRaw(string frameText, Type valueType)
+        {
+            throw new Exception("当前协议不支持裸帧收发");
+        }
     }
 }

@@ -9,7 +9,7 @@
              prism:ViewModelLocator.AutoWireViewModel="True"
              Height="800"
              Width="1400"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="800" d:DesignWidth="1400">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -21,7 +21,7 @@
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="RadioButton">
-                                    <Border CornerRadius="8" Background="Transparent" Name="root" BorderThickness="1">
+                                    <Border CornerRadius="8" Background="CadetBlue" Name="root" BorderThickness="1">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition/>
@@ -41,8 +41,8 @@
                                         <Trigger Property="IsChecked" Value="True">
                                             <Setter Property="Background" Value="#2216a1ff" TargetName="root"/>
                                             <Setter Property="BorderBrush" Value="#4416a1ff" TargetName="root"/>
-                                            <Setter Property="Foreground" TargetName="icon" Value="orange">
-                                            </Setter>
+                                            <Setter Property="Foreground" Value="orange" TargetName="icon"/>
+                                            <Setter Property="Foreground" Value="Orange" TargetName="header"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -53,7 +53,7 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid>
+    <Grid Background="{DynamicResource App.Background}">
         <Grid.Effect>
             <BlurEffect Radius="{Binding ViewBlur}"/>
         </Grid.Effect>
@@ -148,18 +148,19 @@
         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Grid.Column="1" 
                     Margin="0,0,5,0" Background="Transparent" WindowChrome.IsHitTestVisibleInChrome="True">
             <Button Content="&#xe7e6;" Style="{StaticResource WindowControlButtonStyle}" FontFamily="{StaticResource Iconfont}"
-                    Height="30" Width="40" Foreground="#555" Margin="20,0,0,0" Click="Min_Click" />
+                    Height="30" Width="40" Margin="20,0,0,0" Click="Min_Click" />
 
-            <Button Content="&#xe653;" Style="{StaticResource WindowControlButtonStyle}" FontFamily="{StaticResource Iconfont}" Height="30" Width="50" Foreground="#555" Click="Close_Click"/>
+            <Button Content="&#xe653;" Style="{StaticResource WindowControlButtonStyle}" FontFamily="{StaticResource Iconfont}" 
+                    Height="30" Width="50" Click="Close_Click"/>
         </StackPanel>
 
         <!--第二行 背景 平铺-->
         <Grid Grid.Row="1" Grid.ColumnSpan="2">
             <Grid>
                 <Grid.Background>
-                    <VisualBrush Viewport="0,0,100,60" ViewportUnits="Absolute"  TileMode="Tile">
+                    <VisualBrush Viewport="0,0,100,60" ViewportUnits="Absolute" TileMode="Tile">
                         <VisualBrush.Visual>
-                            <Path Data="M18 60,0 30,18 0 50,0 69,30 50,60M69,30 100,30" Stroke="#11FF6E00" StrokeThickness="1"/>
+                            <Path Data="M18 60,0 30,18 0 50,0 69,30 50,60M69,30 100,30" Stroke="#21FF6E00" StrokeThickness="1"/>
                         </VisualBrush.Visual>
                     </VisualBrush>
                 </Grid.Background>

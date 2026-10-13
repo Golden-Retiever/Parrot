@@ -29,7 +29,10 @@ namespace Platform.DataEntities
         /// <summary>
         /// 是否管理员
         /// </summary>
-        public bool IsAdmin { get; set; }
+        /// <summary>
+        /// 角色:0=普通,1=二级管理员,2=一级管理员
+        /// </summary>
+        public int Role { get; set; }
 
         /// <summary>
         /// 真实姓名

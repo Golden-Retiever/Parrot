@@ -7,15 +7,15 @@
                 <ColumnDefinition />
                 <ColumnDefinition Width="20" />
             </Grid.ColumnDefinitions>
-            <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="3" BorderThickness="1" BorderBrush="#EEE"
-                    Background="#FFF"/>
+            <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="3" BorderThickness="0" BorderBrush="{DynamicResource App.Border}"
+                    Background="{DynamicResource App.Background}"/>
             <Path x:Name="Arrow" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                  Data="M 0 0 L 4 4 L 8 0 Z" Fill="#888">
+                  Data="M 0 0 L 4 4 L 8 0 Z" Fill="{DynamicResource App.ForegroundSecondary}">
             </Path>
         </Grid>
         <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Border" Property="Background" Value="#EEE"/>
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource App.Border}"/>
             </Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
@@ -28,6 +28,8 @@
     </ControlTemplate>
 
     <Style TargetType="ComboBox" x:Key="PropComboBoxStyle">
+        <Setter Property="Background" Value="{DynamicResource App.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource App.Foreground}" />
         <Setter Property="SnapsToDevicePixels" Value="true" />
         <Setter Property="OverridesDefaultStyle" Value="true" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
@@ -55,7 +57,7 @@
                                AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
                             <Grid x:Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}"
                                   MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                <Border x:Name="DropDownBorder" BorderThickness="1" BorderBrush="#FF888888" Background="White">
+                                <Border x:Name="DropDownBorder" BorderThickness="1" BorderBrush="{DynamicResource App.Border}" Background="{TemplateBinding Background}">
                                 </Border>
                                 <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
                                     <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />

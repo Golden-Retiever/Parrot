@@ -10,7 +10,8 @@ namespace Platform.DeviceAccess.Transfer
     /// </summary>
     internal class TransferModbusRTU : TransferObject, IRequestResponse
     {
-        private static readonly object transLock = new object();
+        //实例锁:不同串口的传输对象互不阻塞(同线路的设备本就共用同一传输对象实例,串行不受影响)
+        private readonly object transLock = new object();
         private SerialPort serialPort;
 
         public TransferModbusRTU()
@@ -144,6 +145,14 @@ namespace Platform.DeviceAccess.Transfer
                 {
                     result.Status = false;
                     result.Msg = "接收报文超时";
+                }
+                catch (System.IO.IOException)
+                {
+                    //拔线/驱动丢失后 IsOpen 仍是 true(僵尸口),必须显式关闭,下次 Connect 才能真正重开
+                    ConnectState = false;
+                    try { if (serialPort.IsOpen) serialPort.Close(); } catch { }
+                    result.Status = false;
+                    result.Msg = "串口 IO 异常,已关闭待重连";
                 }
                 catch (Exception ex)
                 {

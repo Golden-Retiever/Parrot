@@ -1,15 +1,10 @@
-﻿using DryIoc;
-using Platform.DataEntities;
+﻿using Platform.DataEntities;
 using Platform.DBAccess;
 using Platform.Helper;
+using Platform.Logger;
 using Platform.Models;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -21,17 +16,21 @@ namespace Platform.ViewModels.ComponentWin
     public class ComponentEditWinViewModel : BindableBase
     {
         private IDataAccess _dataAccess;//数据库访问
-        public ComponentEditWinViewModel(IDataAccess dataAccess)
+        private ILoggerService<ComponentEditWinViewModel> _loggerService;//诊断日志
+
+        #region 构造函数
+        public ComponentEditWinViewModel(IDataAccess dataAccess, ILoggerService<ComponentEditWinViewModel> loggerService)
         {
             _dataAccess = dataAccess;
+            _loggerService = loggerService;
 
             InitComponents();//初始化组件
 
             InitHadDevices();//初始化已有设备
 
             PropEntityList = dataAccess.GetPropList();//获取数据库中所有属性
-
         }
+        #endregion 
 
         #region 组件
 
@@ -108,10 +107,6 @@ namespace Platform.ViewModels.ComponentWin
 
         private void InitHadDevices()
         {
-            //DeviceList.Add(new DeviceModel { ComponentId = 1, ComponentType = "AirCompressorUC", DeviceName = "空压机", DeviceNum = "D001", Width = 120, Height = 80, X = 80, Y = 160, Z = 2 });
-
-            //DeviceList.Add(new DeviceModel { ComponentId = 1, ComponentType = "HorizontalPipelineUC", DeviceName = "水平管道", DeviceNum = "D002", Width = 200, Height = 80, X = 488, Y = 150, Z = 2 });
-
             var deviceEntityList = _dataAccess.GetDevices();//获取所有设备
             var devicePropEntityList = _dataAccess.GetDeviceProps();//获取所有设备属性
             var deviceVarEntityList = _dataAccess.GetDeviceVarList();//获取所有设备变量
@@ -124,6 +119,7 @@ namespace Platform.ViewModels.ComponentWin
                 ComponentType = d.ComponentType,
                 DeviceName = d.DeviceName,
                 DeviceNum = d.DeviceNum,
+                RefreshRate = int.TryParse(d.RefreshRate, out int rr) && rr >= 0 ? d.RefreshRate : "500",//null/负数/非法回显500;0是正常值原样显示
                 Width = d.Width,
                 Height = d.Height,
                 X = d.X,
@@ -143,6 +139,7 @@ namespace Platform.ViewModels.ComponentWin
                     VarNum = dv.VarNum,
                     VarName = dv.VarName,
                     VarAddress = dv.VarAddress,
+                    IsRawFrame = dv.IsRawFrame,
                     Offset = dv.Offset,
                     Modulus = dv.Modulus,
                     VarType = dv.VarType,
@@ -162,7 +159,11 @@ namespace Platform.ViewModels.ComponentWin
                 {
                     ControlName = mc.ControlName,
                     ControlAddress = mc.ControlAddress,
+                    IsRawFrame = mc.IsRawFrame,
                     ControlValue = mc.ControlValue,
+                    IsLoop = mc.IsLoop,
+                    ValueType = mc.ValueType,
+                    ControlDelay = int.TryParse(mc.ControlDelay, out int cd) && cd >= 0 ? mc.ControlDelay : "500",//null/负数/非法回显500;0是正常值原样显示
                 })),
 
                 //删除设备命令
@@ -220,29 +221,6 @@ namespace Platform.ViewModels.ComponentWin
 
             VisualStateManager.GoToElementState(obj as Window, "SaveFailedNormal", true);
 
-            #region 校验:属性行必须填了值(DeviceProps.PropValue 是 NOT NULL,空值会让保存失败)
-            string emptyPropTip = null;
-            foreach (DeviceModel deviceInfo in DeviceList)
-            {
-                foreach (DevicePropModel devicePropInfo in deviceInfo.DevicePropList)
-                {
-                    if (string.IsNullOrWhiteSpace(devicePropInfo.PropValue))
-                    {
-                        emptyPropTip = $"设备 {deviceInfo.DeviceName} 的属性「{devicePropInfo.PropName}」未填写值";
-                        break;
-                    }
-                }
-                if (emptyPropTip != null) break;
-            }
-
-            if (emptyPropTip != null)
-            {
-                SaveFailedMessage = "保存设备失败：" + emptyPropTip;
-                VisualStateManager.GoToElementState(obj as Window, "SaveFailedShow", true);
-                return;
-            }
-            #endregion
-
             // 保存到数据库的时候，要排除水平/垂直对齐线，还要排除宽高对齐线
             var deviceEntityList = DeviceList.Where(d => !new string[] { "HL", "VL", "WidthRule", "HeightRule" }.Contains(d.ComponentType)).Select(d => new DeviceEntity
             {
@@ -257,6 +235,7 @@ namespace Platform.ViewModels.ComponentWin
                 Height = d.Height,
                 FlowDirection = d.FlowDirection,
                 Rotate = d.Rotate,
+                RefreshRate = d.RefreshRate,
             }).ToList();
 
             #region 保存设备属性、设备变量
@@ -270,7 +249,7 @@ namespace Platform.ViewModels.ComponentWin
                 //将每个设备属性DevicePropModel转成DevicePropEntity
                 foreach (DevicePropModel devicePropInfo in deviceInfo.DevicePropList)
                 {
-                    devicePropsList.Add(new DevicePropEntity { DeviceNum = deviceInfo.DeviceNum, PropName = devicePropInfo.PropName, PropValue = devicePropInfo.PropValue });
+                    devicePropsList.Add(new DevicePropEntity { DeviceNum = deviceInfo.DeviceNum, PropName = devicePropInfo.PropName, PropValue = devicePropInfo.PropValue ?? "" });
                 }
 
                 //将每个设备变量DeviceVarModel转成DeviceVarEntity
@@ -282,6 +261,7 @@ namespace Platform.ViewModels.ComponentWin
                         DeviceNum = deviceInfo.DeviceNum,
                         VarName = deviceVarInfo.VarName,
                         VarAddress = deviceVarInfo.VarAddress,
+                        IsRawFrame = deviceVarInfo.IsRawFrame,
                         Offset = deviceVarInfo.Offset,
                         VarType = deviceVarInfo.VarType,
                         Modulus = deviceVarInfo.Modulus
@@ -307,13 +287,20 @@ namespace Platform.ViewModels.ComponentWin
                     manualControlList.Add(new ManualControlEntity
                     {
                         DeviceNum = deviceInfo.DeviceNum,
-                        ControlName = manualControlModel.ControlName,
-                        ControlAddress = manualControlModel.ControlAddress,
-                        ControlValue = manualControlModel.ControlValue
+                        ControlName = manualControlModel.ControlName ?? "",
+                        ControlAddress = manualControlModel.ControlAddress ?? "",
+                        IsRawFrame = manualControlModel.IsRawFrame,
+                        ControlValue = manualControlModel.ControlValue ?? "",
+                        IsLoop = manualControlModel.IsLoop,
+                        ValueType = manualControlModel.ValueType,
+                        ControlDelay = manualControlModel.ControlDelay
                     });
                 }
             }
             #endregion
+
+            //诊断:确认保存瞬间每行延时是否为界面输入值(排查延时改动不生效)
+            _loggerService.Info($"保存手动控制延时: {string.Join(" | ", manualControlList.Select(m => $"{m.ControlName}={m.ControlDelay}(loop={m.IsLoop})"))}");
 
             bool isSaveSuccess = _dataAccess.SaveDevice(deviceEntityList, devicePropsList, deviceVarsList, manualControlList, varAlarmConfList);
 
@@ -343,9 +330,15 @@ namespace Platform.ViewModels.ComponentWin
             get { return _selectedDevice; }
             set
             {
-                SetProperty(ref _selectedDevice, value);
+                if (SetProperty(ref _selectedDevice, value))
+                    RaisePropertyChanged(nameof(HasDevice));//联动开关:未选设备时禁用属性交互
             }
         }
+
+        /// <summary>
+        /// 是否选中了设备(通信参数区的 IsEnabled 开关)
+        /// </summary>
+        public bool HasDevice => SelectedDevice != null;
 
 
         public DelegateCommand<DeviceModel> SelectDeviceCommand => new DelegateCommand<DeviceModel>(DoSelectDevice);
@@ -371,7 +364,15 @@ namespace Platform.ViewModels.ComponentWin
             //3、将选中的设备设置现在点击的设备
             SelectedDevice = model;
 
-            InitProps();//初始化属性
+            //4、按设备已存协议套模板:选中即展出参数行,无需手动切一次协议
+            if (model != null)
+            {
+                var stored = model.DevicePropList.FirstOrDefault(p => p.PropName == "Protocol")?.PropValue;
+                if (!string.IsNullOrEmpty(stored) && PropTemplates.ContainsKey(stored))
+                    Protocol = stored;//走属性统一入口:同步下拉框+按模板重展(同名保留已存值)
+                else
+                    ApplyProtocolProps("ModbusRTU");//新拖的设备/无Protocol行:按默认协议展出
+            }
         }
 
         #endregion
@@ -416,13 +417,11 @@ namespace Platform.ViewModels.ComponentWin
         #endregion
 
         #region 退出
-
-        private bool DilogResultVal = false;//DialogResult
+        private bool DilogResultVal = false;
 
         public DelegateCommand<Window> CloseCommand => new DelegateCommand<Window>((win) =>
         {
             win.DialogResult = DilogResultVal;
-
         });
         #endregion
 
@@ -443,6 +442,7 @@ namespace Platform.ViewModels.ComponentWin
         /// </summary>
         public ObservableCollection<PropModel> PropList { get; set; }
 
+        #region 初始化所有属性
         /// <summary>
         /// 初始化所有属性
         /// </summary>
@@ -471,6 +471,7 @@ namespace Platform.ViewModels.ComponentWin
                 PropList = new ObservableCollection<PropModel>(propList);
             }
         }
+        #endregion 
 
         /// <summary>
         /// 初始化属性选项
@@ -503,7 +504,7 @@ namespace Platform.ViewModels.ComponentWin
 
                     OptionsSelectedIndex = 2;
                     break;
-                case "DataBit":
+                case "DataBits":
                     values.Add("5");
                     values.Add("7");
                     values.Add("8");
@@ -513,7 +514,7 @@ namespace Platform.ViewModels.ComponentWin
                 case "Parity":
                     values = Enum.GetNames<Parity>().ToList();
                     break;
-                case "StopBit":
+                case "StopBits"://与 Properties 目录 PropName 一致(原 StopBit 查无此键,下拉空)
                     values = Enum.GetNames<StopBits>().ToList();
                     OptionsSelectedIndex = 1;
                     break;
@@ -546,6 +547,111 @@ namespace Platform.ViewModels.ComponentWin
 
         #endregion
 
+        #region 协议参数模板
+        /// <summary>
+        /// 协议类别
+        /// </summary>
+        private static readonly Dictionary<string, string[]> ModeProtocols = new()
+        {
+            ["0"] = new[] { "ModbusRTU", "ModbusTCP" },
+            ["1"] = new[] { "MQTT" },
+        };
+
+        /// <summary>
+        /// 由协议标识
+        /// </summary>
+        private static string FlagOf(string protocol) => ModeProtocols.First(kv => kv.Value.Contains(protocol)).Key;
+
+        /// <summary>
+        /// 当前协议的通讯标识
+        /// </summary>
+        public string CommFlag => FlagOf(_protocol);
+
+        /// <summary>
+        /// 协议下拉项
+        /// </summary>
+        public string[] ProtocolOptions { get; } = { "ModbusRTU", "ModbusTCP", "MQTT" };//所有选项，ItemsSource
+
+        private string _protocol = "ModbusRTU";//选中值，SelectedItem
+        public string Protocol
+        {
+            get => _protocol;
+            set { _protocol = value; RaisePropertyChanged(); ApplyProtocolProps(value); }
+        }
+
+        /// <summary>
+        /// 下拉选项
+        /// </summary>
+        private static readonly List<string> OptsBaud = new() { "9600", "19200", "38400", "57600", "115200" };
+        private static readonly List<string> OptsParity = Enum.GetNames<Parity>().ToList();
+        private static readonly List<string> OptsStop = Enum.GetNames<StopBits>().ToList();
+        private static readonly List<string> OptsEndian = new() { "Big", "Little" };
+        private static readonly List<string> OptsWord = new() { "HighFirst", "LowFirst" };
+
+        /// <summary>
+        /// 协议 → 参数模板(声明即事实源):一行 = (键, 默认值, 中文名, 0文本/1下拉, 选项);
+        /// 选项 null 表示运行时取值(PortName→SerialPort.GetPortNames());键名与协议层直读的 PropName 一致
+        /// </summary>
+        private static readonly Dictionary<string, (string Name, string Def, string Title, int Type, List<string> Opts)[]> PropTemplates = new()
+        {
+            ["ModbusRTU"] = new (string, string, string, int, List<string>)[]
+            {
+                ("SlaveId","1","从站地址",0,null),
+                ("PortName","","串口名称",1,null),
+                ("BaudRate","115200","波特率",1,OptsBaud),
+                ("Parity","None","校验位",1,OptsParity),
+                ("DataBits","8","数据位",1,new List<string>{ "5","7","8"}),
+                ("StopBits","One","停止位",1,OptsStop),
+                ("Timeout","500","读写超时",0,null),
+                ("TryCount","3","失败重试",0,null),
+                ("DeviceEndian","Big","字节序",1,OptsEndian),
+                ("WordOrder","HighFirst","字序",1,OptsWord),
+            },
+            ["ModbusTCP"] = new (string, string, string, int, List<string>)[]
+            {
+                ("SlaveId","1","从站地址",0,null),
+                ("IP","127.0.0.1","设备IP",0,null),
+                ("Port","502","设备端口号",0,null),
+                ("Timeout","1000","读写超时",0,null),
+                ("TryCount","3","失败重试",0,null),
+                ("DeviceEndian","Big","字节序",1,OptsEndian),
+                ("WordOrder","HighFirst","字序",1,OptsWord),
+            },
+            ["MQTT"] = new (string, string, string, int, List<string>)[]
+            {
+                ("IP","127.0.0.1","服务器IP",0,null),
+                ("Port","1883","端口",0,null),
+            },
+        };
+
+        /// <summary>
+        /// 按模板重展选中设备的参数行:同名保留已填值(old),缺的补默认;
+        /// </summary>
+        private void ApplyProtocolProps(string protocol)
+        {
+            if (SelectedDevice == null || !PropTemplates.TryGetValue(protocol, out var template)) return;
+
+            var old = SelectedDevice.DevicePropList.ToDictionary(d => d.PropName);//旧行快照:保住用户已填值
+
+            var rows = template.Select(t => new DevicePropModel
+            {
+                PropName = t.Name,
+                PropValue = old.TryGetValue(t.Name, out var o) ? o.PropValue : t.Def,
+                PropTitle = t.Title,
+                PropType = t.Type,
+                ValueOptions = t.Opts ?? (t.Name == "PortName" ? SerialPort.GetPortNames().ToList() : null),
+            }).ToList();
+            rows.Add(new DevicePropModel { PropName = "Protocol", PropValue = protocol, PropTitle = "" });
+
+            var list = SelectedDevice.DevicePropList;
+            list.Clear();//原地换内容:集合实例不变,CollectionChanged 自动刷新界面
+            foreach (var row in rows) list.Add(row);
+
+            _protocol = protocol;//字段直写:走属性会回调本方法造成递归
+            RaisePropertyChanged(nameof(Protocol));
+        }
+        #endregion
+
         #region 打开变量报警配置
         public DelegateCommand AlarmConfCommand => new DelegateCommand(() =>
         {
@@ -557,3 +663,4 @@ namespace Platform.ViewModels.ComponentWin
         #endregion
     }
 }
+ 

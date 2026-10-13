@@ -9,8 +9,14 @@
                 <ResourceDictionary>
                     <FontFamily x:Key="Iconfont">pack://application:,,,/Platform.CommonResource;component/Fonts/#iconfont</FontFamily>
                     <FontFamily x:Key="DigitalDisplay">pack://application:,,,/Platform.CommonResource;component/Fonts/#Digital Display</FontFamily>
+                    <SolidColorBrush x:Key="App.Background" Color="White"/>
+                    <SolidColorBrush x:Key="App.Foreground" Color="Black"/>
+                    <SolidColorBrush x:Key="App.ForegroundSecondary" Color="#777"/>
+                    <SolidColorBrush x:Key="App.Border" Color="#DDD"/>
+                    <SolidColorBrush x:Key="App.ControlBackground" Color="#F7F9FA"/>
+                    <SolidColorBrush x:Key="App.RowAlt" Color="#33FFFFFF"/>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </prism:PrismApplication.Resources>
-    </prism:PrismApplication>
+</prism:PrismApplication>

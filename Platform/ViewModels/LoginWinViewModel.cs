@@ -77,7 +77,7 @@ namespace Platform.ViewModels
                 RealName = loginUserEntity.RealName,
                 Department = loginUserEntity.Department,
                 Account = loginUserEntity.Account,
-                IsAdmin = loginUserEntity.IsAdmin
+                Role = loginUserEntity.Role
             });
 
             _dialogService.ShowDialog("MainUC", dialogParas);

@@ -108,14 +108,37 @@ namespace Platform.DBAccess
         public virtual DbSet<MonitorSettingEntity> MonitorSettings { get; set; }
 
         /// <summary>
+        /// 管理员口令表
+        /// </summary>
+        public virtual DbSet<AdminCmdEntity> AdminCommands { get; set; }
+
+        /// <summary>
+        /// 配置表
+        /// </summary>
+        public virtual DbSet<SettingEntity> Settings { get; set; }
+
+        /// <summary>
         /// 配置sqlite 连接
         /// </summary>
         /// <param name="optionsBuilder"></param>
+        /// <summary>
+        /// 管理员口令种子:注册授权比对用,库重建也自带这一行
+        /// </summary>
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<AdminCmdEntity>().HasData(new AdminCmdEntity { Id = 1, CommandText = "我是唐人儿" });
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             // Sqlite数据库的连接字符串
+            //连接串里的相对路径锚定到 exe 目录:运行时、ef 设计时、换设备,三场景同一落点
+            const string prefix = "Data Source=";
             string connStr = ConfigurationManager.ConnectionStrings["SqliteConnString"].ConnectionString;
-            optionsBuilder.UseSqlite(connStr);
+            string path = connStr.Substring(prefix.Length).Trim();
+            if (!Path.IsPathRooted(path))//相对路径 → 锚到 exe 所在目录;绝对路径原样放行
+                path = Path.Combine(System.AppContext.BaseDirectory, path);//全限定 System.AppContext:本类名就叫 AppContext
+            optionsBuilder.UseSqlite(prefix + path);
         }
     }
 

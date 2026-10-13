@@ -161,7 +161,10 @@ namespace Platform.Converter
             c.SetBinding(ComponentBase.ManualControlListProperty, binding);// 组件中的依赖属性
 
             binding = new Binding();
-            binding.Path = new System.Windows.PropertyPath("ManualControlCommand");// Model中的属性
+            binding.Path = new System.Windows.PropertyPath("DataContext.ManualControlCommand");// 业务中,该命令在监控视图模型里,不在设备model里
+            //卡片向上最近的 UserControl 是 MonitorUC,其 DataContext 继承自 MainUC = MainUCViewModel(监控实例);
+            //不能用 Window:MainUC 是 Prism Dialog,宿主窗 DialogOuterWin 的 DataContext 为 null,绑上去永远解析不到
+            binding.RelativeSource = new RelativeSource { AncestorType = typeof(System.Windows.Controls.UserControl) };
             c.SetBinding(ComponentBase.ManualControlCommandProperty, binding);// 组件中的依赖属性
 
             #endregion

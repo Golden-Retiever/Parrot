@@ -11,7 +11,7 @@
         Title="系统登录" Height="520" Width="300"
         xmlns:prism="http://prismlibrary.com/"
         prism:ViewModelLocator.AutoWireViewModel="True"
-       xmlns:helper="clr-namespace:Platform.Helper;assembly=Platform.Helper"
+        xmlns:helper="clr-namespace:Platform.Helper;assembly=Platform.Helper"
         x:Name="LoginWindow">
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="-1"/>

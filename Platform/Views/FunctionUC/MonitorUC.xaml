@@ -9,7 +9,7 @@
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
              xmlns:converter="clr-namespace:Platform.Converter;assembly=Platform.Converter"
              xmlns:component="clr-namespace:Platform.Components;assembly=Platform.Components"
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="800" d:DesignWidth="1400">
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -18,9 +18,7 @@
                 <ResourceDictionary>
                     <!--用户类型转换器-->
                     <converter:UserTypeConverter x:Key="UserTypeConverter"/>
-
                     <converter:DeviceConverter x:Key="dc"/><!--设备转换器-->
-                    
                     <Style TargetType="GroupBox">
                         <Setter Property="Margin" Value="0,5"/>
                         <Setter Property="Template">
@@ -32,8 +30,8 @@
                                         <ContentPresenter/>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" Margin="8">
                                             <Border Background="#16a1ff" Width="3" Height="10" CornerRadius="2" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Header,RelativeSource={RelativeSource Mode=TemplatedParent}}" Margin="5,0"
-                                                  FontSize="11" FontWeight="Normal" Foreground="#888"/>
+                                            <TextBlock Text="{Binding Header,RelativeSource={RelativeSource Mode=TemplatedParent}}" 
+                                                       Margin="5,0" FontSize="11" FontWeight="Normal" Foreground="#888"/>
                                             <Border Background="#AA16a1ff" Width="3" Height="8" CornerRadius="2" VerticalAlignment="Center"/>
                                             <Border Background="#7716a1ff" Width="3" Height="8" CornerRadius="2" Margin="3,0" VerticalAlignment="Center"/>
                                             <Border Background="#4416a1ff" Width="3" Height="8" CornerRadius="2" VerticalAlignment="Center"/>
@@ -126,9 +124,9 @@
                     </Border.Background>
 
                     <TextBlock Text="{Binding Now,StringFormat='yyyy年MM月dd日'}" HorizontalAlignment="Center"
-                  VerticalAlignment="Center" Foreground="#99444444" 
-                  FontWeight="Normal" Name="txt_date" 
-                  DataContext="{x:Static sys:DateTime.Now}"/>
+                               VerticalAlignment="Center" Foreground="#99444444" 
+                               FontWeight="Normal" Name="txt_date" 
+                               DataContext="{x:Static sys:DateTime.Now}"/>
                 </Border>
 
                 <Border BorderThickness="0,0,0,1" VerticalAlignment="Center" Grid.Column="2">
@@ -344,7 +342,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ContentControl   Content="{Binding Path=ComponentType,Converter={StaticResource dc}}" Width="{Binding Width}" Height="{Binding Height}">
+                        <ContentControl  Content="{Binding Path=ComponentType,Converter={StaticResource dc}}" Width="{Binding Width}" Height="{Binding Height}">
                         </ContentControl>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -359,23 +357,23 @@
                     </Grid.ColumnDefinitions>
 
                     <UniformGrid Rows="2" VerticalAlignment="Center">
-                        <Border Background="White" CornerRadius="10" Margin="5,10" Height="56">
+                        <Border Background="{DynamicResource App.Background}" CornerRadius="10" Margin="5,10" Height="56">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="12,0,0,0">
                                 <Border Width="36" Height="36" CornerRadius="12" Background="#445db5cc">
                                     <TextBlock Text="&#xe649;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#5db5cc" FontSize="20"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                    <TextBlock Text="总设备量" FontSize="10" Foreground="#AAA"/>
-                                    <TextBlock Text="{Binding DeviceList.Count}" FontSize="18" Foreground="#444"/>
+                                    <TextBlock Text="总设备量" FontSize="10" Foreground="{DynamicResource App.Foreground}"/>
+                                    <TextBlock Text="{Binding DeviceList.Count}" FontSize="18" Foreground="{DynamicResource App.Foreground}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        
-                        <Border Background="White" CornerRadius="10" Margin="5,10" Height="56">
+
+                        <Border Background="{DynamicResource App.Background}" CornerRadius="10" Margin="5,10" Height="56">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="12,0,0,0">
                                 <Border Width="36" Height="36" CornerRadius="12" Background="#444c67e6">
                                     <TextBlock Text="&#xe605;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" HorizontalAlignment="Center"
-     Foreground="#4c67e6" FontSize="20"/>
+                                               Foreground="#4c67e6" FontSize="20"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center" Margin="8,0">
                                     <TextBlock Text="正在报警" FontSize="10" Foreground="Red"/>
@@ -383,32 +381,31 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        
-                        <Border Background="White" CornerRadius="10" Margin="5,10" Height="56">
+
+                        <Border Background="{DynamicResource App.Background}" CornerRadius="10" Margin="5,10" Height="56">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="12,0,0,0">
                                 <Border Width="36" Height="36" CornerRadius="12" Background="#445db5cc">
                                     <TextBlock Text="&#xe637;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#5db5cc" FontSize="20"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                    <TextBlock Text="总运行时长" FontSize="10" Foreground="#AAA"/>
-                                    <TextBlock Text="50" FontSize="18" Foreground="#444"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-                        
-                        <Border Background="White" CornerRadius="10" Margin="5,10" Height="56">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="12,0,0,0">
-                                <Border Width="36" Height="36" CornerRadius="12" Background="#444c67e6">
-                                    <TextBlock Text="&#xe60b;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" HorizontalAlignment="Center"
-Foreground="#4c67e6" FontSize="20"/>
-                                </Border>
-                                <StackPanel VerticalAlignment="Center" Margin="8,0">
-                                    <TextBlock Text="已停机" FontSize="10" Foreground="#AAA"/>
-                                    <TextBlock Text="2" FontSize="18" Foreground="#444"/>
+                                    <TextBlock Text="总运行时长" FontSize="10" Foreground="{DynamicResource App.Foreground}"/>
+                                    <TextBlock Text="50" FontSize="18" Foreground="{DynamicResource App.Foreground}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
 
+                        <Border Background="{DynamicResource App.Background}" CornerRadius="10" Margin="5,10" Height="56">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="12,0,0,0">
+                                <Border Width="36" Height="36" CornerRadius="12" Background="#444c67e6">
+                                    <TextBlock Text="&#xe60b;" FontFamily="{StaticResource Iconfont}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Foreground="#4c67e6" FontSize="20"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center" Margin="8,0">
+                                    <TextBlock Text="已停机" FontSize="10" Foreground="{DynamicResource App.Foreground}"/>
+                                    <TextBlock Text="2" FontSize="18" Foreground="{DynamicResource App.Foreground}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </UniformGrid>
 
                     <lvc:CartesianChart Grid.Column="1" Margin="10">
@@ -424,7 +421,7 @@ Foreground="#4c67e6" FontSize="20"/>
                         </lvc:CartesianChart.Series>
                         <lvc:CartesianChart.AxisX>
                             <lvc:Axis ShowLabels="True" Labels="11/22,11/23,11/24,11/25,11/26,11/27,11/28,11/29,11/30" 
-          LabelsRotation="0" FontSize="10">
+                                      LabelsRotation="0" FontSize="10">
                                 <lvc:Axis.Separator>
                                     <lvc:Separator Step="1" StrokeThickness="0"/>
                                 </lvc:Axis.Separator>
@@ -440,8 +437,6 @@ Foreground="#4c67e6" FontSize="20"/>
                     </lvc:CartesianChart>
                 </Grid>
             </GroupBox>
-
-          
         </Grid>
 
         <!--第三列-->
@@ -470,7 +465,7 @@ Foreground="#4c67e6" FontSize="20"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
                             <TextBlock  Margin="0,5">
                                 <Run Text="{Binding LoginUserModel.RealName}" FontSize="18" Foreground="White"/>
-                                <Run Text="{Binding LoginUserModel.IsAdmin, StringFormat=[{0}], Converter={StaticResource UserTypeConverter}}" Foreground="#66FFFFFF"/> 
+                                <Run Text="{Binding LoginUserModel.Role, StringFormat=[{0}], Converter={StaticResource UserTypeConverter}}" Foreground="#66FFFFFF"/>
                             </TextBlock>
                             <TextBlock Text="{Binding LoginUserModel.Department}" Foreground="#66FFFFFF" Margin="0,10"/>
                             <TextBlock HorizontalAlignment="Left">

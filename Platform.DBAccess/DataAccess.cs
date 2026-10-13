@@ -134,7 +134,7 @@ namespace Platform.DBAccess
 
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
                 return false;
             }
@@ -437,7 +437,7 @@ namespace Platform.DBAccess
         public void DeleteDealAlarm(int state)
         {
             using var ctx = new AppContext();
-            var alarm = ctx.DeviceAlarms.Where(a => a.State == state);
+            var alarm = ctx.DeviceAlarms;
             int count = alarm.Count();
             if (count == 0) return;
 
@@ -454,6 +454,48 @@ namespace Platform.DBAccess
         {
             using var ctx = new AppContext();
             ctx.SysUsers.Add(user);
+            ctx.SaveChanges();
+        }
+
+        /// <summary>
+        /// 取管理员口令(表无行时返回null=任何非空输入都算错,不授权)
+        /// </summary>
+        /// <returns>口令内容</returns>
+        public string GetAdminCommand()
+        {
+            using var ctx = new AppContext();
+            return ctx.AdminCommands.FirstOrDefault()?.CommandText;
+        }
+
+        /// <summary>
+        /// 获取配置
+        /// </summary>
+        /// <returns></returns>
+        public SettingEntity? GetSetting()
+        {
+            using var ctx = new AppContext();
+            return ctx.Settings.FirstOrDefault(s => s.Id == 1);
+        }
+
+        /// <summary>
+        /// 保存配置
+        /// </summary>
+        /// <param name="setting"></param>
+        public void SaveSetting(SettingEntity setting)
+        {
+            using var ctx = new AppContext();
+            var row = ctx.Settings.FirstOrDefault(s => s.Id == 1);
+            if (row == null)
+            {
+                setting.Id = 1;
+                ctx.Settings.Add(setting);
+            }
+            else
+            {
+                row.Theme = setting.Theme;
+                row.Language = setting.Language;
+                row.Background = setting.Background;
+            }
             ctx.SaveChanges();
         }
     }

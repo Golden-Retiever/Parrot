@@ -7,11 +7,14 @@ using System.Text;
 namespace Platform.DeviceAccess.Base
 {
     /// <summary>
-    /// 字节数组 → 强类型值 的纯函数转换器（与协议无关，供各执行层复用）
+    /// 转换类型
     /// </summary>
-    internal static class ByteConvert
+    public static class ByteConvert
     {
-        /// <summary>字节数组 → 强类型值 的转换器字典</summary>
+        #region 读方向
+        /// <summary>
+        /// 字节数组 → 强类型值 的转换器字典
+        /// </summary>
         private static readonly Dictionary<Type, Func<byte[], object>> _converters = new Dictionary<Type, Func<byte[], object>>
         {
             [typeof(bool)]   = b => b[0] != 0,
@@ -52,5 +55,60 @@ namespace Platform.DeviceAccess.Base
                 arr[i] = ToValue(bytes.Skip(i * perValue).Take(perValue).ToArray(), type);
             return arr;
         }
+        #endregion 
+
+        #region 写方向：值字符串 → 字节（与 ToValues 互为镜像）
+        /// <summary>
+        /// 类型名字符串 → Type("Boolean"/"Int16"/"UInt16"/"Int32"/"UInt32"/"Int64"/"UInt64"/"Single"/"Double"/"String")；查不到抛异常
+        /// </summary>
+        public static Type ToType(string name)
+        {
+            switch ((name ?? "").Trim())
+            {
+                case "Boolean": return typeof(bool);
+                case "Int16":   return typeof(short);
+                case "UInt16":  return typeof(ushort);
+                case "Int32":   return typeof(int);
+                case "UInt32":  return typeof(uint);
+                case "Int64":   return typeof(long);
+                case "UInt64":  return typeof(ulong);
+                case "Single":  return typeof(float);
+                case "Double":  return typeof(double);
+                case "String":  return typeof(string);
+                default: throw new Exception($"不支持的类型：{name}");
+            }
+        }
+
+        /// <summary>
+        /// 值字符串数组 → 字节（主机小端，依次拼接）。bool 每值 1 字节("1"/"true"=1)，其余按 Marshal.SizeOf；
+        /// 段数与 count 不符、解析失败、类型不支持 → 抛异常，由调用方报错
+        /// </summary>
+        public static byte[] ToBytes(string[] parts, Type type, int count)
+        {
+            if (parts == null || parts.Length == 0) throw new Exception("没有可写的值");
+            if (count > 0 && count != parts.Length) throw new Exception($"值个数不符:填了{parts.Length}个,要{count}个");
+
+            var bytes = new List<byte>();
+            foreach (var p in parts)
+                bytes.AddRange(ToBytesOne(p, type));
+            return bytes.ToArray();
+        }
+
+        /// <summary>单值字符串 → 单值字节（主机小端）</summary>
+        private static byte[] ToBytesOne(string s, Type type)
+        {
+            if (type == typeof(bool))   return new[] { (byte)(s == "1" || s.Equals("true", StringComparison.OrdinalIgnoreCase) ? 1 : 0) };
+            if (type == typeof(short))  return BitConverter.GetBytes(Convert.ToInt16(s));
+            if (type == typeof(ushort)) return BitConverter.GetBytes(Convert.ToUInt16(s));
+            if (type == typeof(int))    return BitConverter.GetBytes(Convert.ToInt32(s));
+            if (type == typeof(uint))   return BitConverter.GetBytes(Convert.ToUInt32(s));
+            if (type == typeof(long))   return BitConverter.GetBytes(Convert.ToInt64(s));
+            if (type == typeof(ulong))  return BitConverter.GetBytes(Convert.ToUInt64(s));
+            if (type == typeof(float))  return BitConverter.GetBytes(Convert.ToSingle(s));
+            if (type == typeof(double)) return BitConverter.GetBytes(Convert.ToDouble(s));
+            if (type == typeof(string)) return Encoding.UTF8.GetBytes(s);
+            throw new Exception($"不支持的类型：{type.Name}");
+        }
+        #endregion
     }
 }

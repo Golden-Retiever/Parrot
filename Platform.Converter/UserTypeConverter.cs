@@ -16,8 +16,8 @@ namespace Platform.Converter
         /// <returns></returns>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-           bool isAdmin=bool.Parse(value.ToString());
-            return isAdmin ? "管理员" : "非管理员";
+           int role=int.Parse(value.ToString());
+                        return role switch { 2 => "一级管理员", 1 => "二级管理员", _ => "非管理员" };
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

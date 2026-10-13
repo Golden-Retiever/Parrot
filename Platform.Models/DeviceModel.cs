@@ -1,11 +1,15 @@
 ﻿using Platform.DataEntities;
 using Platform.DeviceAccess;
 using Platform.DeviceAccess.Base;
+using Platform.DeviceAccess.Execute;
+using NLog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,6 +24,8 @@ namespace Platform.Models
     /// </summary>
     public class DeviceModel : BindableBase
     {
+        //静态日志器:本类由界面无参构造,不能走 DI 注入,直接用 NLog 静态入口
+        private static readonly ILogger logger = LogManager.GetLogger("DeviceModel");
 
         #region 基本属性
 
@@ -251,6 +257,18 @@ namespace Platform.Models
                     }
                     #endregion
                 }
+
+                #region 边界限制 —— 钳制,不允许拖出画布
+                //左上角坐标
+                double minX = 0;                                            //画布左上角 x 最小值
+                double minY = 0;                                            //画布左上角 y 最小值
+                double maxX = Math.Max(0, parentCanvas.ActualWidth - Width);//画布右上角 x 最大值
+                double maxY = Math.Max(0, parentCanvas.ActualHeight - Height);//画布左上角 y 最大值
+
+                //先在 画布最大坐标 与 当前坐标 中选出较小者,再与最小坐标选出较大者,保证落在界内
+                tempX = Math.Max(minX, Math.Min(maxX, tempX));
+                tempY = Math.Max(minY, Math.Min(maxY, tempY));
+                #endregion
 
                 X = tempX;
                 Y = tempY;
@@ -648,6 +666,11 @@ namespace Platform.Models
         #endregion
 
         #region 设备属性
+        /// <summary>
+        /// 轮询间隔(毫秒):本设备变量读取节奏,0/空按500兜底
+        /// </summary>
+        public string RefreshRate { get; set; } = "500";
+
         public ObservableCollection<DevicePropModel> DevicePropList { get; set; } = new ObservableCollection<DevicePropModel>();
 
         /// <summary>
@@ -741,43 +764,6 @@ namespace Platform.Models
         /// 删除手动控制
         /// </summary>
         public DelegateCommand<ManualControlModel> DeleteManualControlCommand => new DelegateCommand<ManualControlModel>(model => { ManualControlList.Remove(model); });
-
-        // 手动控制命令
-        public DelegateCommand<ManualControlModel> ManualControlCommand => new DelegateCommand<ManualControlModel>((model
-            ) =>
-        {
-            #region 直接写
-            Communication communication = Communication.CreateInstance();//调用单例方法
-            // 准备通信对象
-            var reEo = communication.GetExecuteObject(this.DevicePropList.Select(p =>
-                new DevicePropEntity { PropName = p.PropName, PropValue = p.PropValue }
-                ).ToList());
-            if (!reEo.Status)
-            {
-                this.IsWarning = true;
-                this.WarningMsg = reEo.Msg;
-                return;
-            }
-
-            //开始执行写
-            //契约:WriteBytes 传主机小端(BitConverter 原生结果),转端由协议层 ConvertEndian 负责,此处不再手动翻转
-            byte[] writeBytes = BitConverter.GetBytes(Convert.ToInt16(model.ControlValue));
-
-            WriteDataInfo writeDataInfo = new WriteDataInfo
-            {
-                StartAddr = model.ControlAddress,
-                ValueType = typeof(UInt16),
-                WriteBytes = writeBytes,
-            };
-
-            var rw = reEo.Data.Write(writeDataInfo);//执行写
-            if (!rw.Status)//如果写失败了，则报警提示
-            {
-                this.IsWarning = true;
-                this.WarningMsg = reEo.Msg;
-            }
-            #endregion
-        });
         #endregion
     }
 }

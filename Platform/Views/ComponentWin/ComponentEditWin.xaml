@@ -12,7 +12,7 @@
         xmlns:behavior="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:converter="clr-namespace:Platform.Converter;assembly=Platform.Converter"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        Title="链路编辑" Height="650" Width="1200">
+        Title="链路编辑" Height="650" Width="1450">
 
     <Window.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -169,7 +169,7 @@
         </VisualStateGroup>
     </VisualStateManager.VisualStateGroups>
     
-    <Grid>
+    <Grid Background="{DynamicResource App.Background}">
         <Grid.Resources>
             <Style TargetType="ToggleButton" x:Key="ExpanderToggleButton">
                 <Setter Property="Foreground" Value="#888"/>
@@ -235,11 +235,12 @@
             </Style>
 
             <Style TargetType="TextBox">
+                <Setter Property="Foreground" Value="{DynamicResource App.Foreground}"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TextBox">
-                            <Border BorderBrush="#EEE" BorderThickness="1" CornerRadius="3" MinHeight="26" Background="White" Name="bor">
+                            <Border BorderBrush="{DynamicResource App.Border}" BorderThickness="1" CornerRadius="3" MinHeight="26" Background="{DynamicResource App.ControlBackground}" Name="bor">
                                 <ScrollViewer Name="PART_ContentHost" Margin="0"/>
                             </Border>
                             <ControlTemplate.Triggers>
@@ -329,7 +330,7 @@
             </Grid.ColumnDefinitions>
 
             <!--第一列 组件列表-->
-            <ScrollViewer HorizontalAlignment="Left" Margin="10,15,0,10" VerticalScrollBarVisibility="Hidden" Visibility="{Binding ElementName=tb_component, Path=IsChecked, Converter={StaticResource b2v}}">
+            <ScrollViewer Background="{DynamicResource App.Background}" HorizontalAlignment="Left" Margin="10,15,0,10" VerticalScrollBarVisibility="Hidden" Visibility="{Binding ElementName=tb_component, Path=IsChecked, Converter={StaticResource b2v}}">
                 <ItemsControl ItemsSource="{Binding ComponentTypeList}" Width="150">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -367,7 +368,9 @@
             </ScrollViewer>
 
             <!--第二列 编辑区域-->
-            <ItemsControl Grid.Column="1" Margin="5,0" ItemsSource="{Binding DeviceList}" AllowDrop="True">
+            <ItemsControl Grid.Column="1" Margin="5,0" Width="830" Height="550"
+                          HorizontalAlignment="Left" VerticalAlignment="Top"
+                          ItemsSource="{Binding DeviceList}" AllowDrop="True"><!--编辑画布=运行时监控可见区(MonitorUC中列830×550),所见即所得-->
                 <behavior:Interaction.Triggers>
                     <behavior:EventTrigger EventName="Drop">
                         <behavior:InvokeCommandAction Command="{Binding DeviceDropCommand}" PassEventArgsToCommand="True"></behavior:InvokeCommandAction>
@@ -419,10 +422,7 @@
 
                             <!--设备右键菜单-->
                             <ContentControl.ContextMenu>
-                                <ContextMenu ItemsSource="{Binding ContextMenus}">
-                                   
-                                </ContextMenu>
-                                
+                                <ContextMenu ItemsSource="{Binding ContextMenus}"/>
                             </ContentControl.ContextMenu>
                         </ContentControl>
                     </DataTemplate>
@@ -430,7 +430,7 @@
             </ItemsControl>
 
             <!--第三列 各种配置-->
-            <Border Grid.Column="2" Width="220" HorizontalAlignment="Right" Margin="0,15,10,10" CornerRadius="5" Visibility="{Binding ElementName=tb_property, Path=IsChecked, Converter={StaticResource b2v}}">
+            <Border Background="{DynamicResource App.Background}" Grid.Column="2" Width="450" HorizontalAlignment="Right" Margin="0,15,10,10" CornerRadius="5" Visibility="{Binding ElementName=tb_property, Path=IsChecked, Converter={StaticResource b2v}}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
@@ -449,19 +449,21 @@
                     </Border>
                     <Border Background="Gold" Width="4" Height="10" CornerRadius="2" Margin="10,0,0,0"  VerticalAlignment="Center" HorizontalAlignment="Left"/>
                     <TextBlock VerticalAlignment="Center" Foreground="White" Margin="20,0,0,0">
-                            <Run Text="参数配置"/>
+                            <Run Text="参数配置" Foreground="{DynamicResource App.Foreground}"/>
                             <Run Text="{Binding SelectedDevice.DeviceName,StringFormat= - {0}}" FontWeight="Bold"/>
                     </TextBlock>
                     
-                    <!--第二行-->
-                    <Grid Grid.Row="1">
+                    <!--第二行(内容超出一屏时可竖向滚动)-->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="50"/>
                             <RowDefinition Height="auto"/>
-                            <RowDefinition Height="50"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
-                            <RowDefinition Height="50"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
@@ -470,11 +472,17 @@
                         <Border CornerRadius="5" Background="#AFFF" Grid.RowSpan="2" Margin="0,5,0,0"/>
                         <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Margin="10,5,10,8"/>
                         <TextBlock Text="通信参数" Margin="15,10" FontWeight="Bold" Foreground="#888" VerticalAlignment="Center"/>
-                        <Button Width="24" Height="24" Style="{StaticResource WindowControlButtonStyle}" Margin="5,0" HorizontalAlignment="Right" ToolTip="添加参数" Command="{Binding SelectedDevice.AddPropCommand}">
-                            <Path Data="M0 5 10 5M5 0 5 10" Stroke="#555"/>
-                        </Button>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5,0" VerticalAlignment="Center"
+                                    IsEnabled="{Binding HasDevice}">
+                                <TextBlock Text="协议" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource App.Foreground}"/>
+                            <ComboBox Width="120" Margin="0,0,10,0"
+                                      ItemsSource="{Binding ProtocolOptions}"
+                                      SelectedItem="{Binding Protocol}"
+                                      Style="{StaticResource PropComboBoxStyle}"/>
+                        </StackPanel>
 
-                        <ScrollViewer Grid.Row="1" MaxHeight="200" VerticalScrollBarVisibility="Hidden" Margin="10,0,0,5">
+                        <ScrollViewer Grid.Row="1" MaxHeight="200" VerticalScrollBarVisibility="Hidden" Margin="10,0,0,5"
+                                      IsEnabled="{Binding HasDevice}">
                             <ItemsControl ItemsSource="{Binding SelectedDevice.DevicePropList}" Margin="0,0,10,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -482,34 +490,23 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition/>
                                                 <ColumnDefinition/>
-                                                <ColumnDefinition Width="20"/>
                                             </Grid.ColumnDefinitions>
-                                            <!--准备一个集合  所有的通信属性-->
-                                            <ComboBox 
-                                                ItemsSource="{Binding DataContext.PropList,ElementName=win}" 
-                                                DisplayMemberPath="PropTitle" 
-                                                SelectedValuePath="PropName" 
-                                                SelectedValue="{Binding PropName}" 
-                                                Name="cb_p_name" 
-                                                Margin="0,0,2,0" Style="{StaticResource PropComboBoxStyle}">
-                                            </ComboBox>
-                                            
+                                            <TextBlock Text="{Binding PropTitle}" Foreground="#555" VerticalAlignment="Center"/>
                                             <ComboBox Grid.Column="1" Name="cb" Visibility="Collapsed"
-                                                     ItemsSource="{Binding ElementName=cb_p_name,Path=SelectedItem.ValueOptions}" 
-                                                     SelectedIndex="{Binding ElementName=cb_p_name,Path=SelectedItem.OptionsSelectedIndex }" 
-                                                     SelectedItem="{Binding PropValue}" 
-                                                     Style="{StaticResource PropComboBoxStyle}">
-                                            </ComboBox>
+                                                      ItemsSource="{Binding ValueOptions}"
+                                                      SelectedItem="{Binding PropValue}"
+                                                      Style="{StaticResource PropComboBoxStyle}"/>
                                             <TextBox Grid.Column="1" Name="tb" Text="{Binding PropValue, UpdateSourceTrigger=PropertyChanged}"/>
-
-                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center"> 
-                                                <Hyperlink FontFamily="{StaticResource Iconfont}" TextDecorations="None" Command="{Binding ElementName=win,Path=DataContext.SelectedDevice.DeletePropCommand}" CommandParameter="{Binding}">&#xe653;</Hyperlink>
-                                            </TextBlock>
                                         </Grid>
                                         <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedItem.PropType,ElementName=cb_p_name}" Value="1">
+                                            <!--0=文本,1=下拉:行自带 PropType,不再查目录-->
+                                            <DataTrigger Binding="{Binding PropType}" Value="1">
                                                 <Setter TargetName="cb" Property="Visibility" Value="Visible"/>
                                                 <Setter TargetName="tb" Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <!--空标题=隐藏的Protocol真身行,不渲染-->
+                                            <DataTrigger Binding="{Binding PropTitle}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
@@ -517,29 +514,45 @@
                             </ItemsControl>
                         </ScrollViewer>
                         <!--#endregion-->
-                        
+
                         <!--#region 变量配置-->
-                        <Border CornerRadius="5" Background="#AFFF" Grid.Row="2" Grid.RowSpan="4" Margin="0,5,0,50"/>
-                        <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Margin="10,5,10,8" Grid.Row="2"/>
-                        <TextBlock Text="变量配置" Grid.Row="2" Margin="15,10" FontWeight="Bold" Foreground="#888" VerticalAlignment="Center"/>
+                        <Border CornerRadius="5" Background="#AFFF" Grid.Row="2" Grid.RowSpan="3" Margin="0,5,0,0"
+                                Visibility="{Binding ElementName=tb_varConf, Path=IsChecked, Converter={StaticResource b2v}}"/>
+                        <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Margin="10,6,10,8" Grid.Row="2"
+                                Visibility="{Binding ElementName=tb_varConf, Path=IsChecked, Converter={StaticResource b2v}}"/>
+                        <!--节标题做成开关:勾=显示变量列表,取消勾=折叠(同"手动控制配置"样式)-->
+                        <ToggleButton Grid.Row="2" Style="{StaticResource ManualToggleButtonStyle}" Height="32" Margin="5,4" HorizontalContentAlignment="Stretch" Name="tb_varConf" IsChecked="True">
+                            <Grid Margin="20,0">
+                                <TextBlock Text="变量配置" HorizontalAlignment="Left" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="&#xe720;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Left" Margin="46 0"/>
+                            </Grid>
+                        </ToggleButton>
                         <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" Margin="5,0" >
+                                <TextBlock Text="轮询间隔(ms)" VerticalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                            <TextBox Width="50" Height="20" Margin="5,-1,8,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                     ToolTip="本设备变量读取节奏,0/空按500兜底"
+                                     Text="{Binding SelectedDevice.RefreshRate}"/>
                             <Button Width="24" Height="24" Style="{StaticResource WindowControlButtonStyle}" ToolTip="添加变量信息" Command="{Binding SelectedDevice.AddVariableCommand}">
                                 <Path Data="M0 5 10 5M5 0 5 10" Stroke="#555"/>
                             </Button>
                         </StackPanel>
 
-                        <Grid Grid.Row="3" Margin="10,0,10,5">
+                        <Grid Grid.Row="3" Margin="10,0,10,5"
+                              Visibility="{Binding ElementName=tb_varConf, Path=IsChecked, Converter={StaticResource b2v}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="30"/>
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="20"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="变量名称" Foreground="#999" HorizontalAlignment="Center"/>
-                            <TextBlock Text="地址" Grid.Column="1" Foreground="#999" HorizontalAlignment="Center"/>
+                                <TextBlock Text="变量名称" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="地址" Grid.Column="1" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="帧" Grid.Column="2" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
                         </Grid>
 
-                        <ScrollViewer Grid.Row="4" MaxHeight="200" VerticalScrollBarVisibility="Hidden" Margin="10,0,0,5">
+                        <ScrollViewer Grid.Row="4" MaxHeight="200" VerticalScrollBarVisibility="Hidden" Margin="10,-5,0,5"
+                                      Visibility="{Binding ElementName=tb_varConf, Path=IsChecked, Converter={StaticResource b2v}}">
                             <ItemsControl ItemsSource="{Binding SelectedDevice.DeviceVarList}" Margin="0,0,10,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -547,16 +560,19 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition/>
                                                 <ColumnDefinition Width="1.5*"/>
+                                                <ColumnDefinition Width="30"/>
                                                 <ColumnDefinition Width="auto"/>
                                                 <ColumnDefinition Width="auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBox Text="{Binding VarName}"/>
                                             <TextBox Text="{Binding VarAddress}" Grid.Column="1" HorizontalContentAlignment="Center" Margin="2,0,0,0"/>
-                                            <ToggleButton Grid.Column="2" Name="tb" Margin="3" Style="{StaticResource PointMoreButtonStlye}" Width="20"/>
-                                            <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <!--裸帧:勾选后地址格填完整请求帧文本,原样收发-->
+                                            <CheckBox IsChecked="{Binding IsRawFrame}" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <ToggleButton Grid.Column="3" Name="tb" Margin="3" Style="{StaticResource PointMoreButtonStlye}" Width="20"/>
+                                            <TextBlock Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Center">
                                                 <Hyperlink FontFamily="{StaticResource Iconfont}" TextDecorations="None" Command="{Binding ElementName=win,Path=DataContext.SelectedDevice.DeleteVariableCommand}" CommandParameter="{Binding}">&#xe653;</Hyperlink>
                                             </TextBlock>
-                                          
+
                                             <Popup StaysOpen="False" IsOpen="{Binding ElementName=tb,Path=IsChecked}" PlacementTarget="{Binding ElementName=root}" AllowsTransparency="True" VerticalOffset="2" HorizontalOffset="0">
                                                 <Border Background="#F7F9FA" Width="{Binding ElementName=root,Path=ActualWidth}" CornerRadius="5" BorderBrush="#DDD" BorderThickness="1" Margin="3">
                                                     <Border.Effect>
@@ -572,9 +588,9 @@
                                                             <RowDefinition Height="30"/>
                                                             <RowDefinition Height="30"/>
                                                         </Grid.RowDefinitions>
-                                                        <TextBlock Text="数据类型" Foreground="#333" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="偏移量" Grid.Row="1" Foreground="#333" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="系数" Grid.Row="2" Foreground="#333" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="数据类型" Foreground="{DynamicResource App.Foreground}" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="偏移量" Grid.Row="1" Foreground="{DynamicResource App.Foreground}" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="系数" Grid.Row="2" Foreground="{DynamicResource App.Foreground}" VerticalAlignment="Center"/>
 
                                                         <!--数据类型选项来自 ViewModel 的 TypeList(ElementName 穿透 DataTemplate 到窗口 DataContext)-->
                                                         <ComboBox Height="26" Style="{StaticResource PropComboBoxStyle}"
@@ -590,46 +606,122 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                        
                         <!--#endregion-->
 
-                        <TextBlock Text="其他配置" Grid.Row="5" Margin="15,10" FontWeight="Bold" Foreground="#888" VerticalAlignment="Center"/>
-
-                        <!--#region 手动控制-->
-                        <ToggleButton Grid.Row="6" Style="{StaticResource ManualToggleButtonStyle}" Height="30" Margin="5,3" HorizontalContentAlignment="Stretch" Tag="5" Name="btnManual">
-                            <Grid Margin="10,0">
-                                <TextBlock Text="手动控制配置" HorizontalAlignment="Left"/>
-                                <TextBlock Text="&#xe720;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Right"/>
+                        <!--#region 手动控制(内嵌显示)-->
+                        <Border CornerRadius="5" Background="#AFFF" Grid.Row="5" Grid.RowSpan="4" Margin="0,5,0,37"
+                                Visibility="{Binding ElementName=btnManual, Path=IsChecked, Converter={StaticResource b2v}}"/>
+                        <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Margin="10,5,10,8" Grid.Row="5"
+                                Visibility="{Binding ElementName=btnManual, Path=IsChecked, Converter={StaticResource b2v}}"/>
+                        <ToggleButton Grid.Row="5" Style="{StaticResource ManualToggleButtonStyle}" Height="30" Margin="5,3" HorizontalContentAlignment="Stretch" Tag="5" Name="btnManual" IsChecked="True">
+                            <Grid Margin="20,0">
+                                <TextBlock Text="手动控制配置" HorizontalAlignment="Left" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="&#xe720;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Left" Margin="72 0"/>
                             </Grid>
                         </ToggleButton>
+                        <StackPanel Orientation="Horizontal" Grid.Row="5" HorizontalAlignment="Right" Margin="5,0">
+                                <Button Width="24" Height="24" Style="{StaticResource WindowControlButtonStyle}" ToolTip="添加手动控制" Command="{Binding SelectedDevice.AddManualControlCommand}" Foreground="{DynamicResource App.Foreground}">
+                                <Path Data="M0 5 10 5M5 0 5 10" Stroke="#555"/>
+                            </Button>
+                        </StackPanel>
+
+                        <Grid Grid.Row="6" Margin="10,-1,10,5" TextBlock.Foreground="#999"
+                              Visibility="{Binding ElementName=btnManual, Path=IsChecked, Converter={StaticResource b2v}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.2*"/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="45"/>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="55"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Text="控制名称" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="控制地址" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="写入数据" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="延时(ms)" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="帧" Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="循环" Grid.Column="5" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                                <TextBlock Text="操作" Grid.Column="6" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="7" MaxHeight="200" VerticalScrollBarVisibility="Hidden" Margin="10,0,0,5"
+                                      Visibility="{Binding ElementName=btnManual, Path=IsChecked, Converter={StaticResource b2v}}">
+                            <ItemsControl ItemsSource="{Binding SelectedDevice.ManualControlList}" Margin="0,0,10,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Height="30" Name="root">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1.2*"/>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition Width="45"/>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="55"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding ControlName}" Height="28" />
+                                            <TextBox Text="{Binding ControlAddress}" Grid.Column="1" Height="28" TextAlignment="Center"/>
+                                            <TextBox Text="{Binding ControlValue}" Grid.Column="2" Height="28" TextAlignment="Center"/>
+                                            <!--循环行的每轮间隔(毫秒);未勾循环置灰不可填-->
+                                            <TextBox Text="{Binding ControlDelay}" Grid.Column="3" Height="28" TextAlignment="Center"
+                                                     IsEnabled="{Binding IsLoop}"/>
+                                            <!--裸帧:勾选后地址格填完整请求帧文本原样发送,写入数据列不参与-->
+                                            <CheckBox IsChecked="{Binding IsRawFrame}" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <!--循环:勾选后随监控自动循环写,点击无效;不勾=点击写一次-->
+                                            <CheckBox IsChecked="{Binding IsLoop}" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                            <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock VerticalAlignment="Center">
+                                                <Hyperlink Command="{Binding DataContext.SelectedDevice.DeleteManualControlCommand,ElementName=win}" CommandParameter="{Binding}">删除</Hyperlink>
+                                                </TextBlock>
+                                                <!--三点按钮:弹出数据类型切换(同变量配置样式)-->
+                                                <ToggleButton Name="tbType" Margin="3,0,0,0" Style="{StaticResource PointMoreButtonStlye}" Width="20" Height="20"/>
+                                                <Popup StaysOpen="False" IsOpen="{Binding ElementName=tbType,Path=IsChecked}" PlacementTarget="{Binding ElementName=tbType}" AllowsTransparency="True" VerticalOffset="2" HorizontalOffset="0">
+                                                    <Border Background="#F7F9FA" CornerRadius="5" BorderBrush="#DDD" BorderThickness="1" Margin="3">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect BlurRadius="10" Opacity="0.1" Color="Gray" ShadowDepth="0"/>
+                                                        </Border.Effect>
+                                                        <Grid Margin="10,5">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="65"/>
+                                                                <ColumnDefinition/>
+                                                            </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="数据类型" Foreground="{DynamicResource App.Foreground}" VerticalAlignment="Center"/>
+                                                            <ComboBox Height="26" Width="90" Style="{StaticResource PropComboBoxStyle}"
+                                                                      ItemsSource="{Binding ElementName=win, Path=DataContext.TypeList}"
+                                                                      SelectedValue="{Binding ValueType}" Grid.Column="1"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </Popup>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                         <!--#endregion-->
 
                         <!--#region 变量报警配置-->
-                        <Button Grid.Row="7" Style="{StaticResource ControlButtonStyle}" Height="30" Margin="5,3" HorizontalContentAlignment="Stretch" Tag="5" Command="{Binding AlarmConfCommand}">
+                        <Button Grid.Row="8" Style="{StaticResource ControlButtonStyle}" Height="30" Margin="5,3" HorizontalContentAlignment="Stretch" Tag="5" Command="{Binding AlarmConfCommand}">
                             <Grid Margin="10,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="127*"/>
                                     <ColumnDefinition Width="63*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="变量报警配置" HorizontalAlignment="Left"/>
+                                    <TextBlock Text="变量报警配置" HorizontalAlignment="Left" Foreground="{DynamicResource App.Foreground}"/>
                                 <TextBlock Text="&#xe720;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Left" Grid.Column="1" Margin="52,0,0,0"/>
                             </Grid>
                         </Button>
                         <!--#endregion-->
                     </Grid>
+                    </ScrollViewer>
                 </Grid>
             </Border>
         </Grid>
 
         <!--下面的按钮-->
-        <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Height="42" CornerRadius="10"  Margin="0,0,0,20">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#F7F9FA" Offset="0"/>
-                    <GradientStop Color="#DDD" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-
+        <Border Background="{DynamicResource App.Background}" VerticalAlignment="Bottom" HorizontalAlignment="Center" Height="42" CornerRadius="10"  Margin="0,0,0,20">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="10" Color="#BBB" ShadowDepth="0" Opacity="0.3"/>
             </Border.Effect>
@@ -647,28 +739,25 @@
                 <ToggleButton Name="tb_component" IsChecked="True" Tag="10,0,0,10" Style="{StaticResource StateButtonStyle}" Margin="1">
                     <StackPanel>
                         <TextBlock Text="&#xe85e;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Center" Margin="0,1"/>
-                        <TextBlock Text="组件" FontSize="9" HorizontalAlignment="Center"/>
+                        <TextBlock Text="组件" FontSize="9" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
                     </StackPanel>
                 </ToggleButton>
-                
                 <ToggleButton Grid.Column="1" Name="tb_property" IsChecked="True" Style="{StaticResource StateButtonStyle}" Margin="1">
                     <StackPanel>
                         <TextBlock Text="&#xe66e;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Center" Margin="0,1"/>
-                        <TextBlock Text="属性" FontSize="9" HorizontalAlignment="Center"/>
+                        <TextBlock Text="属性" FontSize="9" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
                     </StackPanel>
                 </ToggleButton>
-
-
                 <Button Grid.Column="3" Style="{StaticResource ControlButtonStyle}" Command="{Binding SaveDevicesCommand}" CommandParameter="{Binding ElementName=win}" Name="btnSave">
                     <StackPanel>
                         <TextBlock Text="&#xe63c;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Center" Margin="0,1"/>
-                        <TextBlock Text="保存" FontSize="9" HorizontalAlignment="Center"/>
+                        <TextBlock Text="保存" FontSize="9" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="4" Style="{StaticResource ControlButtonStyle}" Tag="0,10,10,0" Command="{Binding CloseCommand}" CommandParameter="{Binding ElementName=win}">
                     <StackPanel>
                         <TextBlock Text="&#xe695;" FontFamily="{StaticResource Iconfont}" HorizontalAlignment="Center" Margin="0,1"/>
-                        <TextBlock Text="退出" FontSize="9" HorizontalAlignment="Center"/>
+                        <TextBlock Text="退出" FontSize="9" HorizontalAlignment="Center" Foreground="{DynamicResource App.Foreground}"/>
                     </StackPanel>
                 </Button>
                 
@@ -676,7 +765,7 @@
         </Border>
 
         <!--保存成功-->
-        <Border Background="#EEFFFFFF" CornerRadius="10" Width="200" Height="45" VerticalAlignment="Top" Name="successbox" Margin="0,-80,0,0">
+        <Border Background="{DynamicResource App.Background}" CornerRadius="10" Width="200" Height="45" VerticalAlignment="Top" Name="successbox" Margin="0,-80,0,0">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="10" Color="#DDD" ShadowDepth="0" Opacity="0.3"/>
             </Border.Effect>
@@ -687,7 +776,7 @@
         </Border>
 
         <!--保存失败-->
-        <Border VerticalAlignment="Top" HorizontalAlignment="Center"  MinWidth="200" MaxWidth="350" Name="failedbox" Background="#EEFFFFFF" CornerRadius="10" MinHeight="45" Margin="0,-80,0,0">
+        <Border VerticalAlignment="Top" HorizontalAlignment="Center"  MinWidth="200" MaxWidth="350" Name="failedbox" Background="{DynamicResource App.Background}" CornerRadius="10" MinHeight="45" Margin="0,-80,0,0">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="10" Color="#DDD" ShadowDepth="0" Opacity="0.3"/>
             </Border.Effect>
@@ -699,84 +788,18 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="&#xe663;" FontFamily="{StaticResource Iconfont}" Foreground="OrangeRed" VerticalAlignment="Top" FontSize="26" Margin="10,13"/>
                 <TextBox Text="{Binding SaveFailedMessage,StringFormat=设备数据保存失败！异常原因：{0}}" 
-                Grid.Column="1" Background="Transparent" MaxLength="10" Effect="{x:Null}"
-                Foreground="#555" VerticalAlignment="Stretch" FontSize="12" FontWeight="Normal" 
-                Style="{x:Null}" Margin="0,10" IsReadOnly="True" TextWrapping="Wrap" 
-                BorderThickness="0" BorderBrush="Transparent" VerticalContentAlignment="Center"/>
+                         Grid.Column="1" Background="Transparent" MaxLength="10" Effect="{x:Null}"
+                         Foreground="#555" VerticalAlignment="Stretch" FontSize="12" FontWeight="Normal" 
+                         Style="{x:Null}" Margin="0,10" IsReadOnly="True" TextWrapping="Wrap" 
+                         BorderThickness="0" BorderBrush="Transparent" VerticalContentAlignment="Center"/>
 
                 <Button Content="&#xe653;" FontFamily="{StaticResource Iconfont}" 
-               Grid.Column="2" Height="20" Width="20"
-               Style="{StaticResource ControlButtonStyle}" VerticalAlignment="Top" 
-               Margin="0,15" HorizontalAlignment="Right"
-               Command="{Binding CloseSaveFailedCommand}"
-               CommandParameter="{Binding ElementName=win}"/>
+                        Grid.Column="2" Height="20" Width="20" Margin="0,15"
+                        Style="{StaticResource ControlButtonStyle}" 
+                        HorizontalAlignment="Right" VerticalAlignment="Top" 
+                        Command="{Binding CloseSaveFailedCommand}" CommandParameter="{Binding ElementName=win}"/>
             </Grid>
         </Border>
 
-        <!--手动控制-->
-        <Popup StaysOpen="False" IsOpen="{Binding ElementName=btnManual,Path=IsChecked}" AllowsTransparency="True" PlacementTarget="{Binding ElementName=btnManual}" Placement="Left">
-            <Border Background="#F7F9FA" Margin="5,5,10,5" Width="260" CornerRadius="5">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="10" Color="#DDD" ShadowDepth="0" Opacity="0.3"/>
-                </Border.Effect>
-
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="30"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <Canvas>
-                        <!--箭头-->
-                        <Path Data="M0 0 8 5 0 10" Fill="#F7F9FA" Canvas.Top="0" Canvas.Right="0" Margin="0,9,-10,0"/>
-                    </Canvas>
-                    <Border Height="1" Background="#EEE" VerticalAlignment="Bottom"/>
-                    <Border Background="White" Grid.Row="1" CornerRadius="0,0,5,5"/>
-
-                    <TextBlock Text="手动控制选项" VerticalAlignment="Center" Margin="10,0" FontWeight="Bold" Foreground="#777"/>
-                    <Button Style="{StaticResource ControlButtonStyle}" Content="&#xe8fe;" FontFamily="{StaticResource Iconfont}" Width="20" Height="20" HorizontalAlignment="Right" Margin="10,0" Tag="3" Command="{Binding SelectedDevice.AddManualControlCommand}"/>
-
-                    <Grid Grid.Row="1" Margin="10,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="28"/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-                        <Grid TextBlock.Foreground="#999">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="1.2*"/>
-                                <ColumnDefinition/>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="35"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="控制名称" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <TextBlock Text="控制地址" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <TextBlock Text="写入数据" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            <TextBlock Text="操作" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        </Grid>
-
-                        <ItemsControl Grid.Row="1" ItemsSource="{Binding SelectedDevice.ManualControlList}" Margin="0,0,0,10" Name="ic1">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Height="30">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="1.2*"/>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition Width="35"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox Text="{Binding ControlName}" Height="28" />
-                                        <TextBox Text="{Binding ControlAddress}" Grid.Column="1" Height="28" TextAlignment="Center"/>
-                                        <TextBox Text="{Binding ControlValue}" Grid.Column="2" Height="28" TextAlignment="Center"/>
-
-                                        <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                        <Hyperlink Command="{Binding DataContext.SelectedDevice.DeleteManualControlCommand,ElementName=win}" CommandParameter="{Binding}">删除</Hyperlink>
-                                        </TextBlock>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </Grid>
-            </Border>
-        </Popup>
     </Grid>
 </Window>

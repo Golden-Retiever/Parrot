@@ -208,5 +208,23 @@ namespace Platform.DBAccess
         /// </summary>
         /// <param name="user"></param>
         void AddUser(SysUserEntity user);
+
+        /// <summary>
+        /// 取管理员口令
+        /// </summary>
+        /// <returns>口令内容</returns>
+        string GetAdminCommand();
+
+        /// <summary>
+        /// 获取配置(单行,无则 null)
+        /// </summary>
+        /// <returns></returns>
+        SettingEntity? GetSetting();
+
+        /// <summary>
+        /// 保存配置(固定 Id=1,覆盖式)
+        /// </summary>
+        /// <param name="setting"></param>
+        void SaveSetting(SettingEntity setting);
     }
 }

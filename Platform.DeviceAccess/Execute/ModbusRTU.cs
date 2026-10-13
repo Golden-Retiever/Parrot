@@ -81,7 +81,7 @@ namespace Platform.DeviceAccess.Execute
                     // 每个变量按偏移切片
                     foreach (var varProp in group.VarPropList)
                     {
-                        int relativeAddr = int.Parse(varProp.VarAddr.Substring(1)) - 1 - group.StartAddress;
+                        int relativeAddr = int.Parse(varProp.VarAddr.Substring(1)) - group.StartAddress;
                         int count = varProp.Count <= 0 ? 1 : varProp.Count;
 
                         if (isCoil)
@@ -127,6 +127,36 @@ namespace Platform.DeviceAccess.Execute
             int respDataLen = (group.FuncCode == FC_ReadCoils || group.FuncCode == FC_ReadDiscreteInputs)//要读字节数
                 ? (group.Count + 7) / 8 : group.Count * 2;
             return SendAndReceive(pdu, respDataLen);
+        }
+        #endregion
+
+        #region 裸帧
+        /// <summary>裸帧收发:帧文本按空格切十六进制原样收发(CRC 由 SendAndReceive 统一追加)。读功能码定相应长度解析返回,写功能码收到响应即成返回 null</summary>
+        public override object SendRaw(string frameText, Type valueType)
+        {
+            var f = frameText.Split(new[] { ' ', '\t', '　', ' ' }, StringSplitOptions.RemoveEmptyEntries)//半角/全角/不换行空格、Tab 都认作分隔
+                             .Select(b => byte.Parse(b, System.Globalization.NumberStyles.HexNumber)).ToList();
+            int n = f[4] * 256 + f[5];//帧内数量
+            if (f[1] is 0x01 or 0x02 or 0x03 or 0x04)//读
+            {
+                List<byte> data = SendAndReceive(f, (f[1] is 0x01 or 0x02) ? (n + 7) / 8 : n * 2);//按功能码定相应长度
+
+                byte[] raw;
+                if (f[1] is 0x01 or 0x02)//位区:数据段展开成位,取前n位
+                {
+                    var bits = new List<byte>(data.Count * 8);
+                    foreach (var b in data)
+                        for (int i = 0; i < 8; i++)
+                            bits.Add((byte)((b >> i) & 1));
+                    raw = bits.GetRange(0, n).ToArray();
+                }
+                else//寄存器区:整段转端后转值
+                    raw = ConvertEndian(data.ToArray(), valueType, GetProp("DeviceEndian") == "Little", GetProp("WordOrder") == "LowFirst");
+
+                return ByteConvert.ToValues(raw, valueType, 1);
+            }
+            SendAndReceive(f, 0);//写:收到正常响应即完成
+            return null;
         }
         #endregion
 
@@ -367,7 +397,7 @@ namespace Platform.DeviceAccess.Execute
                     throw new Exception($"不支持的地址格式：{addr}");
                 }
 
-                ma.StartAddress = int.Parse(addr.Substring(1)) - 1;
+                ma.StartAddress = int.Parse(addr.Substring(1));
 
                 result.Status = true;
                 result.Msg = "没有错误";

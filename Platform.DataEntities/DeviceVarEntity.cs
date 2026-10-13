@@ -38,6 +38,11 @@ namespace Platform.DataEntities
         public string VarAddress { get; set; }
 
         /// <summary>
+        /// 是否裸帧(勾选=地址格填完整请求帧文本,原样收发)
+        /// </summary>
+        public bool IsRawFrame { get; set; }
+
+        /// <summary>
         /// 变量类型
         /// </summary>
         public string VarType { get; set; }

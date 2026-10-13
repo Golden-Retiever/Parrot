@@ -50,26 +50,12 @@
                 <DropShadowEffect BlurRadius="10" Color="#333" ShadowDepth="0" Opacity="0.1"/>
             </Setter.Value>
         </Setter>
-        <Setter Property="Foreground" Value="#555"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Foreground}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border BorderBrush="#DDD" BorderThickness="1" CornerRadius="5" ClipToBounds="True">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
-                                <GradientStop Color="#DDD" Offset="0.3"/>
-                                <GradientStop Color="#EEE" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
+                    <Border BorderBrush="{DynamicResource App.Border}" BorderThickness="1" CornerRadius="5" ClipToBounds="True" Background="{DynamicResource App.ControlBackground}">
                         <Grid>
-                            <Border CornerRadius="5">
-                                <Border.Background>
-                                    <RadialGradientBrush Center="0,1" GradientOrigin="0,1" RadiusX="0.4" RadiusY="0.8">
-                                        <GradientStop Color="#EEE" Offset="0.2"/>
-                                        <GradientStop Color="Transparent" Offset="1"/>
-                                    </RadialGradientBrush>
-                                </Border.Background>
-                            </Border>
                             <Border Background="#08000000" CornerRadius="5" Visibility="Collapsed" Name="mask"/>
 
                             <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
@@ -87,11 +73,12 @@
     </Style>
     
     <Style TargetType="Button" x:Key="WindowControlButtonStyle">
+        <Setter Property="Foreground" Value="{DynamicResource App.Foreground}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Grid Background="Transparent">
-                        <Border Background="#11000000" Visibility="Collapsed" Name="mask"/>
+                        <Border Background="red" Visibility="Collapsed" Name="mask"/>
                         <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -106,19 +93,19 @@
 
 
     <Style TargetType="Button" x:Key="ToolButtonStlye">
-        <Setter Property="Foreground" Value="#888"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.ForegroundSecondary}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border CornerRadius="3" BorderBrush="#EEE" BorderThickness="1"
-                                    Background="#F7F9FA" Name="border">
+                    <Border CornerRadius="3" BorderBrush="{DynamicResource App.Border}" BorderThickness="1"
+                            Background="{DynamicResource App.ControlBackground}" Name="border">
                         <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"
                                            Margin="10,6"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="BorderBrush" Value="#EEE"/>
-                            <Setter TargetName="border" Property="Background" Value="#EEE"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource App.Border}"/>
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource App.Border}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

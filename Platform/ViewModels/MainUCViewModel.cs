@@ -1,9 +1,9 @@
-﻿using DryIoc;
-using LiveCharts;
+﻿using LiveCharts;
 using Platform.DataEntities;
 using Platform.DBAccess;
 using Platform.DeviceAccess;
 using Platform.DeviceAccess.Base;
+using Platform.DeviceAccess.Execute;
 using Platform.DeviceAccess.Transfer;
 using Platform.Helper;
 using Platform.Logger;
@@ -29,19 +29,25 @@ namespace Platform.ViewModels
         public SysUserModel LoginUserModel { get; set; } = new SysUserModel();
 
         public MainUCViewModel(IDataAccess dataAccess, IEventAggregator eventAggregator, ILoggerService<MainUCViewModel> loggerService)
-        {
-            _loggerService = loggerService;//日志服务
-
-            _dataAccess = dataAccess;//数据访问
-            //左侧菜单初始化
-            InitMenu();
-
-            //初始化设备
-            InitHadDevices();
-
-            //直接连接PLC设备监控
-            Monitor();
-
+        {   
+            //日志服务
+            _loggerService = loggerService;
+            
+            //数据访问
+            _dataAccess = dataAccess;
+            
+            //主题初始化
+            ThemeHelper.Apply(_dataAccess.GetSetting()?.Theme ?? "");
+            
+            InitMenu();//左侧菜单初始化
+            InitHadDevices();//初始化设备
+            InitSevenPower();//初始化7日耗电量
+            InitSevenAir();//初始化7日能耗 - 用气量
+            InitSevenLeak();//初始化7日能耗 - 泄露量
+            InitAirRanking();//初始化用气排行
+            InitDeviceWarning();//初始化设备提醒
+            InitMonitorSettingVar(); //初始化监控配置变量
+            
             #region 监视正在报警的设备量
             Task.Run(async () =>
             {
@@ -52,23 +58,10 @@ namespace Platform.ViewModels
                 }
             });
             #endregion
-
-            InitSevenPower();//初始化7日耗电量
-
-            InitSevenAir();//初始化7日能耗 - 用气量
-
-            InitSevenLeak();//初始化7日能耗 - 泄露量
-
-            InitAirRanking();//初始化用气排行
-
-            InitDeviceWarning();//初始化设备提醒
-
+            
             #region 订阅报警处理结果
             eventAggregator.GetEvent<HandleAlarmEvent>().Subscribe(HandleDeviceAlram);
             #endregion
-
-            //初始化监控配置变量
-            InitMonitorSettingVar();
         }
 
         #region 报警处理
@@ -90,7 +83,6 @@ namespace Platform.ViewModels
         #endregion 
 
         #region IDialogAware的实现
-
         public string Title { get; set; } = "主界面";
 
         public DialogCloseListener RequestClose { get; set; }
@@ -119,6 +111,9 @@ namespace Platform.ViewModels
         public void OnDialogOpened(IDialogParameters parameters)
         {
             LoginUserModel = parameters.GetValue<SysUserModel>("LoginUser");
+
+            //登录信息赋值后才启动监控:构造里启动会抢在赋值前写记录,Account=null炸库
+            Monitor();
         }
         #endregion
 
@@ -166,8 +161,8 @@ namespace Platform.ViewModels
             //1、只针对该功能实现
             //2、代码优化（封装） 后面 弹出窗体，在窗体上面有操作 dialogresult
 
-            //如果不是管理员，并且不是监控功能
-            if (!LoginUserModel.IsAdmin && menuModel.TargetFunc != "MonitorUC")
+            //如果不是管理员(一级/二级都放行)，并且不是监控功能
+            if (LoginUserModel.Role == 0 && menuModel.TargetFunc != "MonitorUC")
             {
                 MenuList[0].IsSelected = true;//没有权限，默认还是选择监控功能
                 if (ActionHelper.ExecuteAndResult<object>("ShowRight", null))
@@ -225,8 +220,6 @@ namespace Platform.ViewModels
         });
         #endregion
 
-        #region 工艺链路编辑/组件编辑/设备编辑
-
         #region 模糊度
         private int _viewBlur = 0;//默认0，即清晰
 
@@ -237,6 +230,7 @@ namespace Platform.ViewModels
         }
         #endregion
 
+        #region 打开编辑窗口
         /// <summary>
         /// 打开编辑命令
         /// </summary>
@@ -247,41 +241,37 @@ namespace Platform.ViewModels
         /// </summary>
         private void DoOpenComponentsEdit()
         {
-            if (LoginUserModel.IsAdmin)
+            if (LoginUserModel.Role != 0)
             {
                 this.ViewBlur = 5;//默认模糊
-                //1、如果dialogresult=true
-                if (ActionHelper.ExecuteAndResult<object>("ComponentsEdit", null))
+
+
+                //====进编辑界面立即停(轮询+循环写全部取消,编辑期间不对设备读写)====//
+                cts.Cancel();
+                //等待所有task退出
+                Task.WaitAll(taskList.ToArray(),3000);
+                taskList.Clear();
+                //订阅式:摘除推送回调
+                foreach (var (push, handler) in _pushHandlers)
                 {
-                    //1、取消task
-                    cts.Cancel();
-
-                    //2、等待之前所有的task完成  耗时操作
-                    Task.WaitAll(taskList.ToArray());
-
-                    //3、清空之前所有的task
-                    taskList.Clear();
-
-                    //4、重新实例一个取消发生器
-                    cts = new CancellationTokenSource();
-
-                    //5、订阅式:摘除推送回调
-                    foreach (var (push, handler) in _pushHandlers)
-                    {
-                        push.MessageReceived -= handler;
-                    }
-                    _pushHandlers.Clear();
-
-                    //初始化设备
-                    InitHadDevices();
-
-                    //直接连接PLC设备监控
-                    Monitor();
-
-                    //通过windows服务进行监控
-                    //MonitorByService();
-
+                    push.MessageReceived -= handler;
                 }
+                _pushHandlers.Clear();
+                //运行连接一并清空:手动写在监控外不可用
+                _runEos.Clear();
+
+
+                //====打开编辑窗(返回true=保存了配置,false=取消;两种情况都重启监控)====//
+                ActionHelper.ExecuteAndResult<object>("ComponentsEdit", null);
+                
+
+                //====出编辑界面重启(保存了用新配置,取消了用原配置,都重新来)====//
+                //重新实例一个取消发生器
+                cts = new CancellationTokenSource();
+                //初始化设备
+                InitHadDevices();
+                //直接连接PLC设备监控
+                Monitor();
 
                 this.ViewBlur = 0;//变清晰
             }
@@ -295,7 +285,6 @@ namespace Platform.ViewModels
                 }
             }
         }
-
         #endregion
 
         #region 初始化设备
@@ -335,6 +324,7 @@ namespace Platform.ViewModels
                 Z = d.Z,
                 FlowDirection = d.FlowDirection,
                 Rotate = d.Rotate,
+                RefreshRate = d.RefreshRate,
 
                 //获取该设备属性
                 DevicePropList = new ObservableCollection<DevicePropModel>(devicePropEntityList.Where(dp => dp.DeviceNum == d.DeviceNum).Select(dp => new DevicePropModel { PropName = dp.PropName, PropValue = dp.PropValue })),
@@ -350,6 +340,7 @@ namespace Platform.ViewModels
                     Offset = dv.Offset,
                     Modulus = dv.Modulus,
                     VarType = dv.VarType,
+                    IsRawFrame = dv.IsRawFrame,//勾帧行:地址格是完整帧文本,轮询单独裸发
 
                     //取出该变量的报警配置
                     VarAlarmConfList = new ObservableCollection<VarAlarmConfModel>(varAlarmConfList.Where(vac => vac.VarNum == dv.VarNum).Select(vac => new VarAlarmConfModel
@@ -366,7 +357,11 @@ namespace Platform.ViewModels
                 {
                     ControlName = mc.ControlName,
                     ControlAddress = mc.ControlAddress,
+                    IsRawFrame = mc.IsRawFrame,//勾帧行:地址格是完整帧文本,点击/循环直接裸发
                     ControlValue = mc.ControlValue,
+                    IsLoop = mc.IsLoop,
+                    ValueType = mc.ValueType,
+                    ControlDelay = mc.ControlDelay,
                 })),
 
             });
@@ -397,6 +392,9 @@ namespace Platform.ViewModels
 
         //订阅式监听:每个设备的推送回调记录(保存时反注册,防止重复挂接、重复入库)
         private readonly List<(IPushSubscribe Push, Action<string, string> Handler)> _pushHandlers = new List<(IPushSubscribe Push, Action<string, string> Handler)>();
+
+        //运行中各设备的执行对象(DeviceNum → EO):窗口层持有的"_device1"对应物,手动写按钮由此取连接
+        private readonly Dictionary<string, ExecuteObject> _runEos = new Dictionary<string, ExecuteObject>();
 
         DataTable computeDt = new DataTable();//用来计算的
 
@@ -432,14 +430,30 @@ namespace Platform.ViewModels
                 }
                 #endregion
 
+                #region 登记运行连接(窗口层持有,手动写按钮由此取)
+                _runEos[deviceModel.DeviceNum] = resultEo.Data;
+                #endregion
+
                 #region 获取变量集合
-                List<VariableProp> varList = deviceModel.DeviceVarList.Select(v => new VariableProp
+                List<VariableProp> varList;
+                try
                 {
-                    VarNum = v.VarNum,
-                    VarAddr = v.VarAddress,
-                    ValueType = Type.GetType("System." + v.VarType)
-                }).ToList();
-                #endregion 
+                    varList = deviceModel.DeviceVarList.Where(v => !v.IsRawFrame).Select(v => new VariableProp//勾帧行不进结构化分组,轮询里单独裸帧收发
+                    {
+                        VarNum = v.VarNum,
+                        VarAddr = v.VarAddress,
+                        ValueType = ByteConvert.ToType(v.VarType)//与写路径同一白名单:配错响亮失败
+                    }).ToList();
+                }
+                catch (Exception ex)
+                {
+                    deviceModel.IsWarning = true;
+                    deviceModel.WarningMsg = "配置错误";
+                    _loggerService.Error($"设备{deviceModel.DeviceNum}变量类型配置错误:{ex.Message}");
+                    SaveDeviceAlarm("A" + DateTime.Now.ToString("yyyyMMddHHmmssFFF"), deviceModel, null, null, null, ex.Message);
+                    continue;//只跳过这台,其他设备照常监控
+                }
+                #endregion
 
                 #region 分组
                 var resultGroupAddr = resultEo.Data.GroupAddress(varList);
@@ -456,6 +470,9 @@ namespace Platform.ViewModels
                 #region 数据解析
                 Task task = Task.Run(async () =>
                 {
+                    try
+                    {
+                    bool loopStarted = false;//循环写启动标记:健康检查通过后只启动一次
                     //订阅式走事件驱动,问答式走轮询
                     #region 订阅式
                     if (deviceModel.DevicePropList?.FirstOrDefault(p => p.PropName == "Protocol")?.PropValue == "MQTT")
@@ -476,6 +493,13 @@ namespace Platform.ViewModels
                             deviceModel.WarningMsg = "服务器繁忙";//报警信息
                             SaveDeviceAlarm("A" + DateTime.Now.ToString("yyyyMMddHHmmssFFF"), deviceModel, null, null, null, firstRead.Msg);//记录报警
                             return;
+                        }
+
+                        if (!loopStarted)//健康检查通过(首轮读成功)才启动循环写
+                        {
+                            loopStarted = true;
+                            int loopCount = StartLoopWrites(deviceModel, resultEo.Data, cts.Token);
+                            if (loopCount > 0) _loggerService.Info($"设备{deviceModel.DeviceNum}健康检查通过,已启动{loopCount}条循环写");
                         }
 
                         void OnPush(string topic, string payload)
@@ -503,39 +527,223 @@ namespace Platform.ViewModels
                     #region 轮询
                     while (!cts.IsCancellationRequested)
                     {
-                        //如果发现设备已经报警了，程序不要处理
-                        if (deviceModel.IsWarning)
+                        #region 读:轮询读+解析+报警自动恢复
+                        try
                         {
-                            continue;
+                            await Task.Delay(deviceModel.IsWarning ? 5000 : PosInt(deviceModel.RefreshRate), cts.Token);
                         }
-
-                        await Task.Delay(500);//等待500毫秒
+                        catch (OperationCanceledException) { break; }//停止监控/进编辑:立即退出轮询,顺序走下方 DisConnect
 
                         var readResult = resultEo.Data.Read(resultGroupAddr.Data);//分组 按照功能码分组  每读一次就分组一次
                         if (!readResult.Status)
                         {
-                            _loggerService.Fatal($"{resultEo.Data.ToString()}读出错了，错误信息:{readResult.Msg}");
-                            deviceModel.IsWarning = true;//要报警了
-                            deviceModel.WarningMsg = "服务器繁忙";//报警信息
+                            if (!deviceModel.IsWarning)//首次失败 → 记日志+报警表各一次;已报警期间静默重试,不刷日志/报警表
+                            {
+                                _loggerService.Fatal($"{resultEo.Data.ToString()}读出错了，错误信息:{readResult.Msg}");
+                                deviceModel.IsWarning = true;//要报警了
+                                deviceModel.WarningMsg = "服务器繁忙";//报警信息
 
-                            string alarmNum = "A" + DateTime.Now.ToString("yyyyMMddHHmmssFFF");//报警编号
-                            SaveDeviceAlarm(alarmNum, deviceModel, null, null, null, readResult.Msg);//记录报警
-
+                                string alarmNum = "A" + DateTime.Now.ToString("yyyyMMddHHmmssFFF");//报警编号
+                                SaveDeviceAlarm(alarmNum, deviceModel, null, null, null, readResult.Msg);//记录报警
+                            }
                             continue;
                         }
 
-                        ParseDeviceData(deviceModel, resultGroupAddr.Data);//解析+计算+报警+监控记录(订阅式推送也走这里)
+                        if (deviceModel.IsWarning)//报警中读到成功 → 自动解除报警
+                        {
+                            deviceModel.IsWarning = false;
+                            deviceModel.WarningMsg = "";
+                            _loggerService.Info($"设备{deviceModel.DeviceNum}通信恢复,报警自动解除");
+                        }
+
+                        ParseDeviceData(deviceModel, resultGroupAddr.Data);//解析+计算+报警+监控记录
+
+                        foreach (var rawVar in deviceModel.DeviceVarList.Where(v => v.IsRawFrame))//勾帧行:一帧一收发,值直接上模型
+                        {
+                            try 
+                            { 
+                                rawVar.ReadValue = resultEo.Data.SendRaw(rawVar.VarAddress, ByteConvert.ToType(rawVar.VarType)); 
+                            }
+                            catch (Exception ex)
+                            {
+                                _loggerService.Error($"设备{deviceModel.DeviceNum}裸帧变量[{rawVar.VarName}]读取失败:{ex.Message}");
+                                deviceModel.IsWarning = true; deviceModel.WarningMsg = ex.Message;
+                            }
+                        }
+                        #endregion
+
+                        if (!loopStarted)//健康检查通过(首轮读成功)才启动循环写
+                        {
+                            loopStarted = true;
+                            int loopCount = StartLoopWrites(deviceModel, resultEo.Data, cts.Token);
+                            if (loopCount > 0) _loggerService.Info($"设备{deviceModel.DeviceNum}健康检查通过,已启动{loopCount}条循环写");
+                        }
                     }
-                    #endregion 
+                    #endregion
 
                     resultEo.Data.DisConnect();//断开连接
+                    }
+                    catch (Exception ex)
+                    {
+                        //读/解析抛出的异常原来会静默丢掉task,这里兜底记日志(设备已报警)
+                        _loggerService.Error($"设备{deviceModel.DeviceNum}监控线程异常终止:{ex.Message}", ex);
+                        deviceModel.IsWarning = true;
+                        deviceModel.WarningMsg = ex.Message;
+                    }
                 }, cts.Token);
                 #endregion 
 
                 taskList.Add(task);//保存task
             }
         }
-        #endregion 
+        #endregion
+
+        #region 写
+        /// <summary>
+        /// 手动执行命令:组件卡片上的按钮,同 Aggrement 的写按钮——后台线程即时写,UI 立即返回
+        /// </summary>
+        public DelegateCommand<ManualControlModel> ManualControlCommand => new DelegateCommand<ManualControlModel>(DoManualControl);
+
+        /// <summary>
+        /// 手动执行:勾"循环"的由监控自动循环(点击无效);未勾的=后台线程即时写(与轮询读串行于传输实例锁)
+        /// </summary>
+        private void DoManualControl(ManualControlModel model)
+        {
+            if (model.IsLoop) return;//循环型随监控自动运行:进编辑停/出编辑重启,点击不介入
+            var device = DeviceList.FirstOrDefault(d => d.ManualControlList.Contains(model));//行在哪个设备的列表里就归属哪个设备:监控层自持数据,模型不留回指字段(同 Aggrement)
+            if (device == null) { _loggerService.Error("手动控制行未找到归属设备,无法执行"); return; }
+
+            WriteDataInfo wd = null;
+            if (!model.IsRawFrame)//勾帧行不走结构化装配:写入数据列可空,整帧文本直接裸发
+            {
+                wd = BuildWriteData(device, model);//按行上数据类型转字节;不符 → 已报警"配置错误"
+                if (wd == null) return;
+            }
+
+            if (!_runEos.TryGetValue(device.DeviceNum, out ExecuteObject eo))//监控没启动 → 没有可用连接
+            {
+                _loggerService.Error($"设备{device.DeviceNum}未在监控中,手动控制[{model.ControlName}]不执行");
+                device.IsWarning = true;
+                device.WarningMsg = "未监控";
+                return;
+            }
+
+            _ = Task.Run(() =>
+            {
+                if (model.IsRawFrame)//勾帧:整帧文本经协议 SendRaw 原样发送
+                {
+                    try { eo.SendRaw(model.ControlAddress, null); }
+                    catch (Exception ex)
+                    {
+                        _loggerService.Error($"设备{device.DeviceNum}手动控制[{model.ControlName}]裸帧发送失败:{ex.Message}");
+                        device.IsWarning = true; device.WarningMsg = ex.Message;
+                    }
+                    return;
+                }
+
+                var rw = eo.Write(wd);
+                if (!rw.Status)//如果写失败了，则报警提示
+                {
+                    _loggerService.Error($"设备{device.DeviceNum}手动控制[{model.ControlName}]写地址{model.ControlAddress}失败:{rw.Msg}");
+                    device.IsWarning = true;
+                    device.WarningMsg = rw.Msg;
+                }
+            });
+        }
+
+        /// <summary>
+        /// 按行的数据类型把写入数据转成写字节:类型决定字节数与寄存器数(Int32/Single=4字节2寄存器,Int64/Double=8字节4寄存器...);
+        /// 数值转不动该类型或类型不支持 → 设备报警"配置错误",返回 null 不写
+        /// </summary>
+        private WriteDataInfo BuildWriteData(DeviceModel device, ManualControlModel model)
+        {
+            Type valueType;
+            byte[] writeBytes;
+            try
+            {
+                valueType = ByteConvert.ToType(model.ValueType);//类型名 → Type,查不到抛异常
+                //WriteBytes 传主机小端(BitConverter 原生结果),转端由协议层 ConvertEndian 负责
+                writeBytes = ByteConvert.ToBytes(new[] { model.ControlValue }, valueType, 1);
+            }
+            catch (Exception ex)//类型不支持/数值与类型不符(如 Int16 填 65280)或格式非法
+            {
+                _loggerService.Error($"设备{device.DeviceNum}手动控制[{model.ControlName}]写入数据[{model.ControlValue}]转{model.ValueType}失败:{ex.Message}");
+                device.IsWarning = true; device.WarningMsg = "配置错误";
+                return null;
+            }
+
+            return new WriteDataInfo
+            {
+                StartAddr = model.ControlAddress,
+                ValueType = valueType,
+                WriteBytes = writeBytes,
+            };
+        }
+
+        /// <summary>
+        /// 非负整数或兜底:0=不等待(按输入执行),空/非数字/负数 → 500兜底(轮询间隔与循环行间隔共用此保护)
+        /// </summary>
+        private static int PosInt(string text) => int.TryParse(text, out int v) && v >= 0 ? v : 500;
+
+        /// <summary>
+        /// 启动手动控制循环池:勾"循环"的条目收进同一个任务,按清单顺序写完一条再写下一条,整轮写完统一等4秒
+        /// (与轮询读同一生命周期:随监控启动,进编辑随 cts 取消)
+        /// </summary>
+        /// <returns>加入池中的条数</returns>
+        private int StartLoopWrites(DeviceModel deviceModel, ExecuteObject device, CancellationToken ct)
+        {
+            List<ManualControlModel> loopList = deviceModel.ManualControlList.Where(m => m.IsLoop).ToList();
+            if (loopList.Count == 0) return 0;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    while (!ct.IsCancellationRequested)
+                    {
+                        List<ManualControlModel> deadList = new List<ManualControlModel>();//本轮配置错误的条目
+                        foreach (ManualControlModel model in loopList)//循环池:顺序写,一条写完(含串口应答)再写下一条
+                        {
+                            if (ct.IsCancellationRequested) break;
+                            if (!model.IsLoop) continue;//运行中被取消勾选 → 跳过
+
+                            if (model.IsRawFrame)//勾帧行:整帧文本直接裸发,写入数据列不参与
+                            {
+                                try { device.SendRaw(model.ControlAddress, null); }
+                                catch (Exception ex)
+                                {
+                                    _loggerService.Error($"设备{deviceModel.DeviceNum}循环写[{model.ControlName}]发送失败:{ex.Message}");
+                                    deviceModel.IsWarning = true; deviceModel.WarningMsg = ex.Message;
+                                }
+                                await Task.Delay(PosInt(model.ControlDelay), ct);//循环行间隔=行级延时(ms),0=连续写,空/非法→500兜底
+                                continue;
+                            }
+
+                            WriteDataInfo wd = BuildWriteData(deviceModel, model);
+                            if (wd == null) { deadList.Add(model); continue; }//配置错误不会自愈 → 已报警,本轮后剔除
+
+                            var rw = device.Write(wd);
+                            if (!rw.Status)
+                            {
+                                _loggerService.Error($"设备{deviceModel.DeviceNum}循环写[{model.ControlName}]地址{model.ControlAddress}失败:{rw.Msg}");
+                                deviceModel.IsWarning = true; deviceModel.WarningMsg = rw.Msg;
+                            }
+                            await Task.Delay(PosInt(model.ControlDelay), ct);//循环行间隔=行级延时(ms),0=连续写,空/非法→500兜底
+                        }
+                        loopList.RemoveAll(deadList.Contains);
+                        if (loopList.Count == 0) break;//池空 → 结束任务
+                    }
+                }
+                catch (OperationCanceledException) { }//进编辑/停止监控 → 正常退出
+                catch (Exception ex)
+                {
+                    _loggerService.Error($"设备{deviceModel.DeviceNum}循环池异常终止:{ex.Message}", ex);
+                    deviceModel.IsWarning = true; deviceModel.WarningMsg = ex.Message;//设备断开等 → 循环终止
+                }
+            }, ct);
+            return loopList.Count;
+        }
+        #endregion
 
         #region 解析数据
         /// <summary>
