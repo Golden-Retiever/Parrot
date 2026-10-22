@@ -17,18 +17,18 @@ namespace Platform.ViewModels
     /// </summary>
     public class LoginWinViewModel : BindableBase
     {
-        private IDataAccess _dataAccess;//数据访问实例
-        private IDialogService _dialogService;//对话框服务
+        private IDataAccess _dataAccess;       /* 数据访问实例 */
+        private IDialogService _dialogService; /* 对话框服务 */
         public LoginWinViewModel(IDataAccess dataAccess,IDialogService dialogService)
         {
-            _dataAccess = dataAccess;//数据访问实例
+            _dataAccess = dataAccess;          /* 数据访问实例 */
             _dialogService= dialogService;
         }
 
         /// <summary>
         /// 登录用户
         /// </summary>
-        public SysUserModel SysUser { get; set; } = new SysUserModel() { Account="黄渤",Password="123"};
+        public SysUserModel SysUser { get; set; } = new SysUserModel() { Account="你好唐姆",Password="123456"};
 
         #region 登录结果
         private string _loginErrorMsg;
@@ -38,7 +38,7 @@ namespace Platform.ViewModels
             get { return _loginErrorMsg; }
             set
             {
-                SetProperty(ref _loginErrorMsg, value);//通知
+                SetProperty(ref _loginErrorMsg, value);
             }
         }
         #endregion
@@ -66,7 +66,7 @@ namespace Platform.ViewModels
                 return;
             }
 
-            loginWin.Hide();//隐藏登录窗体
+            loginWin.Hide(); /* 隐藏登录窗体 */
 
             //登录成功跳转到主界面 使用dialogservice  并且将登录用户信息传给主界面
             DialogParameters dialogParas = new DialogParameters();
@@ -96,7 +96,7 @@ namespace Platform.ViewModels
             {
                 SysUser.Account = RegisterWin.RegisteredUser.Account;
                 SysUser.Password = RegisterWin.RegisteredUser.Password;
-                RegisterWin.RegisteredUser = null; // 清空，避免下次误用
+                RegisterWin.RegisteredUser = null; /* 清空，避免下次误用 */
             }
 
             loginWin.Show();

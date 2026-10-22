@@ -5,8 +5,9 @@
              xmlns:prism="http://prismlibrary.com/">
     <prism:PrismApplication.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary.MergedDictionaries> 
                 <ResourceDictionary>
+                    <!-- 默认值 -->
                     <FontFamily x:Key="Iconfont">pack://application:,,,/Platform.CommonResource;component/Fonts/#iconfont</FontFamily>
                     <FontFamily x:Key="DigitalDisplay">pack://application:,,,/Platform.CommonResource;component/Fonts/#Digital Display</FontFamily>
                     <SolidColorBrush x:Key="App.Background" Color="White"/>
@@ -15,6 +16,8 @@
                     <SolidColorBrush x:Key="App.Border" Color="#DDD"/>
                     <SolidColorBrush x:Key="App.ControlBackground" Color="#F7F9FA"/>
                     <SolidColorBrush x:Key="App.RowAlt" Color="#33FFFFFF"/>
+                    <SolidColorBrush x:Key="App.ToggleIcon" Color="#66000000"/>
+                    <SolidColorBrush x:Key="App.ToggleWrite" Color="#99000000"/>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

@@ -2,20 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Platform.DBAccess;
 
 #nullable disable
 
-namespace Platform.DBAccess.Migrations
+namespace Platform.DBAccess.Migrations.Scenario
 {
-    [DbContext(typeof(AppContext))]
-    [Migration("20260904111723_9.4")]
-    partial class _94
+    [DbContext(typeof(ScenarioContext))]
+    partial class ScenarioContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -39,39 +36,6 @@ namespace Platform.DBAccess.Migrations
                     b.HasKey("RankingId");
 
                     b.ToTable("AirRankings");
-                });
-
-            modelBuilder.Entity("Platform.DataEntities.ComponentEntity", b =>
-                {
-                    b.Property<int>("ComponentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ComponentName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ComponentType")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("Height")
-                        .HasColumnType("REAL");
-
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TypeName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<double>("Width")
-                        .HasColumnType("REAL");
-
-                    b.HasKey("ComponentId");
-
-                    b.ToTable("Components");
                 });
 
             modelBuilder.Entity("Platform.DataEntities.DeviceAlarmEntity", b =>
@@ -143,6 +107,10 @@ namespace Platform.DBAccess.Migrations
                     b.Property<double>("Height")
                         .HasColumnType("REAL");
 
+                    b.Property<string>("RefreshRate")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Rotate")
                         .HasColumnType("INTEGER");
 
@@ -195,6 +163,9 @@ namespace Platform.DBAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsRawFrame")
+                        .HasColumnType("INTEGER");
+
                     b.Property<double>("Modulus")
                         .HasColumnType("REAL");
 
@@ -246,15 +217,28 @@ namespace Platform.DBAccess.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ControlDelay")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ControlName")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ControlValue")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DeviceNum")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsLoop")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsRawFrame")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ValueType")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -328,28 +312,6 @@ namespace Platform.DBAccess.Migrations
                     b.ToTable("MonitorSettings");
                 });
 
-            modelBuilder.Entity("Platform.DataEntities.PropEntity", b =>
-                {
-                    b.Property<int>("PropId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("PropName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PropTitle")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("PropType")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PropId");
-
-                    b.ToTable("Properties");
-                });
-
             modelBuilder.Entity("Platform.DataEntities.SevenAirEntity", b =>
                 {
                     b.Property<int>("AirId")
@@ -402,44 +364,6 @@ namespace Platform.DBAccess.Migrations
                     b.HasKey("PowerId");
 
                     b.ToTable("SevenPowers");
-                });
-
-            modelBuilder.Entity("Platform.DataEntities.SysUserEntity", b =>
-                {
-                    b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Account")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Department")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsAdmin")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RealName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("SysUsers");
                 });
 
             modelBuilder.Entity("Platform.DataEntities.TrendAxisEntity", b =>

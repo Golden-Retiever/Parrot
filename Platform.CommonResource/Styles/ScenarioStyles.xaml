@@ -1,0 +1,86 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--侧栏"场景"按钮:风格与菜单按钮一致,Toggle 弹出场景菜单-->
+    <Style TargetType="ToggleButton" x:Key="ScenarioButtonStyle">
+        <Setter Property="Margin" Value="5,8"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border CornerRadius="8" Background="Transparent" Name="root" BorderThickness="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition Height="24"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="&#xe703;" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       FontFamily="{DynamicResource Iconfont}" FontSize="28"
+                                       Margin="0,8,0,0" Foreground="{DynamicResource App.ToggleIcon}" Name="icon" Opacity="0.7"/>
+                            <TextBlock Text="场景" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource App.ToggleWrite}" Name="header" FontSize="11"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter Property="Background" Value="#2216a1ff" TargetName="root"/>
+                            <Setter Property="BorderBrush" Value="#4416a1ff" TargetName="root"/>
+                            <Setter Property="Foreground" Value="orange" TargetName="icon"/>
+                            <Setter Property="Foreground" Value="Orange" TargetName="header"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--场景标签页里的×关闭按钮:固定大小不随标签收缩,hover 变红-->
+    <Style TargetType="Button" x:Key="TabCloseButtonStyle">
+        <Setter Property="Width" Value="18"/>
+        <Setter Property="Height" Value="18"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Name="bor" CornerRadius="3">
+                        <TextBlock Text="&#xe653;" FontFamily="{DynamicResource Iconfont}" FontSize="11"
+                                   Foreground="{DynamicResource App.ForegroundSecondary}" Name="icon"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="OrangeRed" TargetName="icon"/>
+                            <Setter Property="Background" Value="#22FF4500" TargetName="bor"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--场景菜单里的命令按钮(新建/导入/导出/场景清单项)
+        Foreground 必须显式 Setter:挂在容器上的 TextBlock.Foreground 会被
+        Control.Foreground 的元数据默认值挡住,继承不下来(暗色主题下字是黑的)-->
+    <Style TargetType="Button" x:Key="ScenarioMenuItemStyle">
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Foreground}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Name="bor" CornerRadius="5" Padding="10,0">
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <!--半透明主题色,明暗主题下都协调(原来是硬编码浅色,暗色下刺眼)-->
+                            <Setter Property="Background" Value="#2216a1ff" TargetName="bor"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--bool → Visibility(引导页显隐)-->
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+</ResourceDictionary>

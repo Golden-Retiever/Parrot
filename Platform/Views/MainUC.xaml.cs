@@ -39,6 +39,9 @@ namespace Platform.Views
 
             //打开趋势选择设备变量界面
             ActionHelper.Register<object>("ShowTrendVars",new Func<object, bool>(ShowTrendDeviceVars));
+
+            //打开场景命名界面(新建/重命名共用)
+            ActionHelper.Register<object>("ScenarioName", ShowScenarioNameView);
         }
 
         /// <summary>
@@ -87,6 +90,16 @@ namespace Platform.Views
         }
 
         /// <summary>
+        /// 打开场景命名界面(新建/重命名共用)
+        /// </summary>
+        /// <param name="obj">ScenarioNamePayload</param>
+        /// <returns>弹窗的DialogResult</returns>
+        private bool ShowScenarioNameView(object obj)
+        {
+            return ShowDialog(new ScenarioNameWin() { DataContext = obj });
+        }
+
+        /// <summary>
         /// 弹窗
         /// </summary>
         /// <param name="dialogWindow"></param>
@@ -118,6 +131,16 @@ namespace Platform.Views
         {
             Window window = Window.GetWindow(this);//找到当前所在是window
             window.WindowState = WindowState.Minimized;
+        }
+
+        /// <summary>
+        /// 引导页"打开场景":勾选侧栏场景按钮,弹出场景菜单
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OpenScenarioPopup_Click(object sender, RoutedEventArgs e)
+        {
+            tbScenario.IsChecked = true;//Popup 的 IsOpen 绑定它,自动弹出
         }
     }
 }

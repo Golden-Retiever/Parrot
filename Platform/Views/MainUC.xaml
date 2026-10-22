@@ -14,14 +14,14 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Platform.CommonResource;component/Styles/ButtonStyles.xaml"/>
-
+                <ResourceDictionary Source="pack://application:,,,/Platform.CommonResource;component/Styles/ScenarioStyles.xaml"/>
                 <ResourceDictionary>
                     <Style TargetType="RadioButton" x:Key="MenuButtonStyle">
                         <Setter Property="Margin" Value="5,8"/>
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="RadioButton">
-                                    <Border CornerRadius="8" Background="CadetBlue" Name="root" BorderThickness="1">
+                                    <Border CornerRadius="8" Background="Transparent" Name="root" BorderThickness="1">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition/>
@@ -31,10 +31,10 @@
                                                        VerticalAlignment="Center" HorizontalAlignment="Center"
                                                        FontFamily="{StaticResource Iconfont}" FontSize="28"
                                                        Margin="0,8,0,0"
-                                                       Foreground="#66000000" Name="icon" Opacity="0.7"/>
+                                                       Foreground="{DynamicResource App.ToggleIcon}" Name="icon" Opacity="0.7"/>
                                             <TextBlock Text="{Binding MenuName}" Grid.Row="1" 
                                                        VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                       Foreground="#99000000" Name="header" FontSize="11"/>
+                                                       Foreground="{DynamicResource App.ToggleWrite}" Name="header" FontSize="11"/>
                                         </Grid>
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -84,7 +84,7 @@
             </Border.BorderBrush>
         </Border>
 
-        <!--主界面左上角的图片和标题--><Border BorderThickness="0,0,1,1" CornerRadius="0,0,60,0" Height="45" Grid.ColumnSpan="2" Grid.RowSpan="2" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <!--主界面左上角的图片和标题--><Border x:Name="bdTitle" BorderThickness="0,0,1,1" CornerRadius="0,0,60,0" Height="45" Grid.ColumnSpan="2" Grid.RowSpan="2" HorizontalAlignment="Left" VerticalAlignment="Top">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                     <GradientStop Color="#c2e0fa" Offset="0"/>
@@ -144,6 +144,74 @@
             </Line>
         </Grid>
 
+        <!--第一行 场景标签条:首列宽度绑定标题圆弧实际宽度,标签从白色圆弧右侧起排(后声明叠在装饰条上层)-->
+        <Grid Grid.ColumnSpan="2" VerticalAlignment="Bottom">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding ActualWidth,ElementName=bdTitle}"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <ItemsControl Grid.Column="1" VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                          ItemsSource="{Binding ScenarioTabs}" Margin="4,0,0,0">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <!--靠左依次向右增加-->
+                    <StackPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <RadioButton GroupName="scenarioTab" IsChecked="{Binding IsCurrent,Mode=TwoWay}"
+                                 Command="{Binding DataContext.SwitchTabCommand,RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                 CommandParameter="{Binding}">
+                        <RadioButton.Template>
+                            <ControlTemplate TargetType="RadioButton">
+                                <Border x:Name="tabRoot" CornerRadius="6,6,0,0" Background="#2216a1ff"
+                                        BorderBrush="Transparent" BorderThickness="0,0,0,2"
+                                        Padding="8,3,6,3" Margin="0,0,2,0" Cursor="Hand"
+                                        Tag="{Binding DataContext,RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.ContextMenu>
+                                        <!--右键菜单:改名/关闭该标签页/全部关闭(经 Tag 桥接 ViewModel)-->
+                                        <ContextMenu>
+                                            <MenuItem Header="改名"
+                                                      Command="{Binding PlacementTarget.Tag.RenameTabCommand,RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="关闭该标签页"
+                                                      Command="{Binding PlacementTarget.Tag.CloseTabCommand,RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="删除场景(删库文件)"
+                                                      Command="{Binding PlacementTarget.Tag.DeleteTabCommand,RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="全部关闭"
+                                                      Command="{Binding PlacementTarget.Tag.CloseAllTabsCommand,RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <StackPanel Orientation="Horizontal">
+                                        <!--超宽截断加省略号;❌固定大小不随标签收缩-->
+                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+                                                   MaxWidth="120" TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding DisplayName}" Foreground="{DynamicResource App.Foreground}"/>
+                                        <Button Style="{StaticResource TabCloseButtonStyle}" Margin="4,0,0,0"
+                                                Command="{Binding DataContext.CloseTabCommand,RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="tabRoot" Property="Background" Value="#4416a1ff"/>
+                                        <Setter TargetName="tabRoot" Property="BorderBrush" Value="#16a1ff"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="tabRoot" Property="Background" Value="#3316a1ff"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </RadioButton.Template>
+                    </RadioButton>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        </Grid>
+
         <!--第一行 第二列 窗口控制按钮-->
         <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Grid.Column="1" 
                     Margin="0,0,5,0" Background="Transparent" WindowChrome.IsHitTestVisibleInChrome="True">
@@ -174,6 +242,24 @@
 
             <!--放功能页的地方 一个控件 自定义的控件-->
             <ContentControl Content="{Binding ViewFunc}" Margin="0,5"/>
+
+            <!--场景引导页:全部标签关闭时显示(盖住功能页;侧栏菜单在本容器之后声明,仍在上层可用)-->
+            <Grid Panel.ZIndex="10"
+                  Background="#CCF7F9FA" Visibility="{Binding ShowScenarioGuide,Converter={StaticResource BoolToVis}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="没有打开的场景" FontSize="18" Foreground="#888888" HorizontalAlignment="Center"/>
+                    <TextBlock Text="新建一个场景，或点击左侧“场景”按钮打开已有场景" FontSize="12" Foreground="#AAAAAA"
+                               HorizontalAlignment="Center" Margin="0,6,0,18"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="新建场景" Width="110" Height="32" Margin="0,0,15,0"
+                                Style="{StaticResource NormalButtonStyle}" Background="#409EFE"
+                                Command="{Binding NewScenarioCommand}"/>
+                        <Button Content="打开场景" Width="110" Height="32"
+                                Style="{StaticResource NormalButtonStyle}" Background="#409EFE"
+                                Click="OpenScenarioPopup_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
         </Grid>
 
         <!--第二行 第一列 菜单-->
@@ -195,17 +281,59 @@
                     </LinearGradientBrush>
                 </Border.BorderBrush>
 
-                <!--菜单列表-->
-                <ItemsControl VerticalAlignment="Center" ItemsSource="{Binding MenuList}" Margin="0,0,0,100">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <RadioButton IsChecked="{Binding IsSelected}" GroupName="rbMenu" 
-                                         Style="{StaticResource MenuButtonStyle}"
-                                         Command="{Binding DataContext.SwitchFuncCommand,RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                         CommandParameter="{Binding}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <!--侧栏:场景按钮放在"监控"菜单上方,与菜单同一组垂直居中-->
+                <Grid>
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,0,100">
+                        <!--场景管理按钮:点击向右弹进内容区(菜单贴窗口左缘,向左会出窗)-->
+                        <ToggleButton x:Name="tbScenario" Style="{StaticResource ScenarioButtonStyle}"/>
+
+                        <!--菜单列表-->
+                        <ItemsControl ItemsSource="{Binding MenuList}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton IsChecked="{Binding IsSelected}" GroupName="rbMenu"
+                                                 Style="{StaticResource MenuButtonStyle}"
+                                                 Command="{Binding DataContext.SwitchFuncCommand,RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                 CommandParameter="{Binding}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!--场景菜单:清单列表 + 新建/导入/导出(背景/文字随主题)-->
+                    <Popup x:Name="popupScenario" PlacementTarget="{Binding ElementName=tbScenario}"
+                           Placement="Right" StaysOpen="False" AllowsTransparency="True"
+                           IsOpen="{Binding IsChecked,ElementName=tbScenario,Mode=TwoWay}">
+                        <Border Background="{DynamicResource App.Background}" CornerRadius="8" BorderBrush="#4416a1ff" BorderThickness="1"
+                                Padding="6" MinWidth="160" Margin="8">
+                            <Border.Effect>
+                                <DropShadowEffect Color="Gray" ShadowDepth="0" BlurRadius="10" Opacity="0.2"/>
+                            </Border.Effect>
+                            <StackPanel TextBlock.Foreground="{DynamicResource App.Foreground}">
+                                <TextBlock Text="场景清单" Foreground="{DynamicResource App.ForegroundSecondary}" FontSize="11" Margin="8,3"/>
+                                <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding AllScenarioList}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource ScenarioMenuItemStyle}" Content="{Binding DisplayName}"
+                                                        ToolTip="{Binding DisplayName}"
+                                                        Command="{Binding DataContext.OpenScenarioCommand,RelativeSource={RelativeSource AncestorType=Popup}}"
+                                                        CommandParameter="{Binding FileName}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                                <Separator Margin="4,5"/>
+                                <Button Style="{StaticResource ScenarioMenuItemStyle}" Content="新建场景"
+                                        Command="{Binding DataContext.NewScenarioCommand,RelativeSource={RelativeSource AncestorType=Popup}}"/>
+                                <Button Style="{StaticResource ScenarioMenuItemStyle}" Content="导入场景"
+                                        Command="{Binding DataContext.ImportScenarioCommand,RelativeSource={RelativeSource AncestorType=Popup}}"/>
+                                <Button Style="{StaticResource ScenarioMenuItemStyle}" Content="导出场景"
+                                        Command="{Binding DataContext.ExportScenarioCommand,RelativeSource={RelativeSource AncestorType=Popup}}"/>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

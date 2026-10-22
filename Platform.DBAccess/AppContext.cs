@@ -1,4 +1,3 @@
-
 using Microsoft.EntityFrameworkCore;
 using Platform.DataEntities;
 using System.Configuration;
@@ -6,140 +5,92 @@ using System.IO;
 
 namespace Platform.DBAccess
 {
+    /// <summary>
+    /// æ•°æ®åº“å…¥å£
+    /// </summary>
     public class AppContext : DbContext
     {
+        private readonly string? _explicitDbPath;
+
         /// <summary>
-        /// ÓÃ»§±í
+        /// 
+        /// </summary>
+        public AppContext()
+        {
+
+        }
+
+        /// <summary>
+        /// æ˜¾å¼è·¯å¾„æ„é€ ï¼šä»…ä¾› DbUpgrader å»ºä¸´æ—¶æ–°åº“ç”¨
+        /// </summary>
+        /// <param name="dbPath">ä¸»åº“æ–‡ä»¶ç»å¯¹è·¯å¾„</param>
+        public AppContext(string dbPath)
+        {
+            _explicitDbPath = dbPath;
+        }
+
+        /// <summary>
+        /// ç”¨æˆ·è¡¨
         /// </summary>
         public virtual DbSet<SysUserEntity> SysUsers { get; set; }
 
         /// <summary>
-        /// ×é¼ş±í
+        /// ç»„ä»¶è¡¨
         /// </summary>
         public virtual DbSet<ComponentEntity> Components { get; set; }
 
         /// <summary>
-        /// Éè±¸±í
-        /// </summary>
-        public virtual DbSet<DeviceEntity> Devices { get; set; }
-
-        /// <summary>
-        /// ÊôĞÔ±í(»ù´¡±í)
+        /// å±æ€§è¡¨(å‚æ•°åº“)
         /// </summary>
         public virtual DbSet<PropEntity> Properties { get; set; }
 
         /// <summary>
-        /// Éè±¸ÊôĞÔ±í
-        /// </summary>
-        public virtual DbSet<DevicePropEntity> DeviceProps { get; set; }
-
-        /// <summary>
-        /// Éè±¸±äÁ¿±í
-        /// </summary>
-        public virtual DbSet<DeviceVarEntity> DeviceVars { get; set; }
-
-        /// <summary>
-        /// ÊÖ¶¯¿ØÖÆ±í
-        /// </summary>
-        public virtual DbSet<ManualControlEntity> ManualControls { get; set; }
-
-        /// <summary>
-        /// ±äÁ¿±¨¾¯ÅäÖÃ±í
-        /// </summary>
-        public virtual DbSet<VarAlarmConfEntity> VarAlarmConfs { get; set; }
-
-        /// <summary>
-        /// Éè±¸±¨¾¯ĞÅÏ¢±í
-        /// </summary>
-        public virtual DbSet<DeviceAlarmEntity> DeviceAlarms { get; set; }
-
-        /// <summary>
-        /// ¼à¿ØÊı¾İ±í
-        /// </summary>
-        public virtual DbSet<MonitorRecordEntity> MonitorRecords { get; set; }
-
-        /// <summary>
-        /// ÆßÈÕºÄµçÁ¿
-        /// </summary>
-        public virtual DbSet<SevenPowerEntity> SevenPowers { get; set; }
-
-        /// <summary>
-        /// ÆßÈÕºÄÄÜ-ÓÃÆøÁ¿
-        /// </summary>
-        public virtual DbSet<SevenAirEntity> SevenAirs { get; set; }
-
-        /// <summary>
-        /// ÆßÈÕºÄÄÜ-Ğ¹Â¶Á¿
-        /// </summary>
-        public virtual DbSet<SevenLeakEntity> SevenLeaks { get; set; }
-
-        /// <summary>
-        /// Éè±¸ÌáĞÑ
-        /// </summary>
-        public virtual DbSet<DeviceWarningEntity> DeviceWarnings { get; set; }
-
-        /// <summary>
-        /// ÓÃÆøÁ¿ÅÅĞĞ
-        /// </summary>
-        public virtual DbSet<AirRankingEntity> AirRankings { get; set; }
-
-        /// Ç÷ÊÆ
-        /// </summary>
-        public virtual DbSet<TrendEntity> Trends { get; set; }
-
-        /// <summary>
-        /// ×İÖá
-        /// </summary>
-        public virtual DbSet<TrendAxisEntity> TrendAxises { get; set; }
-
-        /// <summary>
-        /// Ô¤¾¯ĞÅÏ¢
-        /// </summary>
-        public virtual DbSet<TrendSectionEntity> TrendSections { get; set; }
-
-        /// <summary>
-        /// Í¼ĞòÁĞ
-        /// </summary>
-        public virtual DbSet<TrendSeriesEntity> TrendSerieses { get; set; }
-
-        /// <summary>
-        /// ¼à¿ØÅäÖÃ±í
-        /// </summary>
-        public virtual DbSet<MonitorSettingEntity> MonitorSettings { get; set; }
-
-        /// <summary>
-        /// ¹ÜÀíÔ±¿ÚÁî±í
+        /// ç®¡ç†å‘˜å‘½ä»¤è¡¨
         /// </summary>
         public virtual DbSet<AdminCmdEntity> AdminCommands { get; set; }
 
         /// <summary>
-        /// ÅäÖÃ±í
+        /// è®¾ç½®è¡¨
         /// </summary>
         public virtual DbSet<SettingEntity> Settings { get; set; }
 
         /// <summary>
-        /// ÅäÖÃsqlite Á¬½Ó
-        /// </summary>
-        /// <param name="optionsBuilder"></param>
-        /// <summary>
-        /// ¹ÜÀíÔ±¿ÚÁîÖÖ×Ó:×¢²áÊÚÈ¨±È¶ÔÓÃ,¿âÖØ½¨Ò²×Ô´øÕâÒ»ĞĞ
+        /// ç§å­: å†…ç½®çš„æ•°æ®
         /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<AdminCmdEntity>().HasData(new AdminCmdEntity { Id = 1, CommandText = "ÎÒÊÇÌÆÈË¶ù" });
+            //å†…ç½®ç™»å½•ç”¨æˆ·
+            modelBuilder.Entity<SysUserEntity>().HasData(new SysUserEntity
+            {
+                UserId = 1,
+                Account = "ä½ å¥½å”å§†",
+                Password = "e10adc3949ba59abbe56e057f20f883e",  // MD5("123456")
+                Role = 2,                                       // ä¸€çº§ç®¡ç†å‘˜
+                RealName = "å”å§†",
+                Gender = "ç”·",
+                Department = "åˆå§‹è´¦å·"
+            });
+            //å†…ç½®ç®¡ç†å‘˜å£ä»¤
+            modelBuilder.Entity<AdminCmdEntity>().HasData(new AdminCmdEntity { Id = 1, CommandText = "æˆ‘ä¸æ˜¯å”äººå„¿" });
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // SqliteÊı¾İ¿âµÄÁ¬½Ó×Ö·û´®
-            //Á¬½Ó´®ÀïµÄÏà¶ÔÂ·¾¶Ãª¶¨µ½ exe Ä¿Â¼:ÔËĞĞÊ±¡¢ef Éè¼ÆÊ±¡¢»»Éè±¸,Èı³¡¾°Í¬Ò»Âäµã
+            //æ˜¾å¼è·¯å¾„(DbUpgraderå»ºä¸´æ—¶åº“)ä¼˜å…ˆ;å¦åˆ™è¯»é…ç½®è¿æ¥ä¸²
+            if (_explicitDbPath != null)
+            {
+                optionsBuilder.UseSqlite("Data Source=" + _explicitDbPath);
+                return;
+            }
+
+            // Sqliteæ•°æ®åº“çš„è¿æ¥å­—ç¬¦ä¸²
+            //è¿æ¥ä¸²ç›¸å¯¹è·¯å¾„é”šå®š exe ç›®å½•:è¿è¡Œæ—¶ä¸efè®¾è®¡æ—¶ä¸åŒè®¾å¤‡,ä½†è½ç›˜æ˜¯åŒä¸€ä¸ª
             const string prefix = "Data Source=";
             string connStr = ConfigurationManager.ConnectionStrings["SqliteConnString"].ConnectionString;
             string path = connStr.Substring(prefix.Length).Trim();
-            if (!Path.IsPathRooted(path))//Ïà¶ÔÂ·¾¶ ¡ú Ãªµ½ exe ËùÔÚÄ¿Â¼;¾ø¶ÔÂ·¾¶Ô­Ñù·ÅĞĞ
-                path = Path.Combine(System.AppContext.BaseDirectory, path);//È«ÏŞ¶¨ System.AppContext:±¾ÀàÃû¾Í½Ğ AppContext
+            if (!Path.IsPathRooted(path))//ç›¸å¯¹è·¯å¾„
+                path = Path.Combine(System.AppContext.BaseDirectory, path);
             optionsBuilder.UseSqlite(prefix + path);
         }
     }
-
 }

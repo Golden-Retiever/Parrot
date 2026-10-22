@@ -15,8 +15,27 @@ namespace Platform
     {
         protected override void OnStartup(StartupEventArgs e)
         {
-            // 首次运行自动建库/升级（EF Core 应用所有迁移）
-            // 已存在 platform.db 时为 no-op，不丢数据
+            // ==== 场景拆分/恢复先行 ====
+            try
+            {
+                DBAccess.ScenarioManager.EnsureFirstRunSplit();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("场景初始化失败：" + ex.Message, "启动错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            // ==== 主库结构升级 ====
+            try
+            {
+                DBAccess.DbUpgrader.UpgradeMainDbIfNeeded();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("主库结构升级失败：" + ex.Message, "启动错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            // ==== 主库建库/应用迁移 ====
             try
             {
                 using (var ctx = new DBAccess.AppContext())
@@ -26,9 +45,17 @@ namespace Platform
             }
             catch (Exception ex)
             {
-                // 库初始化失败不致命崩，记日志后继续（由登录页/数据访问层提示）
-                // 需 _loggerService 但此处容器未就绪，暂用 MessageBox
                 MessageBox.Show("数据库初始化失败：" + ex.Message, "启动错误", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            // ==== 全部场景库结构升级 ====
+            try
+            {
+                DBAccess.DbUpgrader.UpgradeAllScenarioDbs();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("场景库结构升级失败：" + ex.Message, "启动错误", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
             base.OnStartup(e);
@@ -55,8 +82,8 @@ namespace Platform
 
             // 注册泛型日志服务：ILoggerService<T> 关联到具体类 T
             containerRegistry.RegisterScoped(
-                typeof(ILoggerService<>), // 泛型接口（需新增）
-                typeof(NLogLoggerService<>) // 泛型实现（需新增）
+                typeof(ILoggerService<>),   // 泛型接口
+                typeof(NLogLoggerService<>) // 泛型实现
             );
 
             //containerRegistry.Register<ILogger>();
@@ -74,6 +101,13 @@ namespace Platform
             MonitorRecordOperation.SaveRecords(dataAccess,null);//记录设备监控数据
 
             dataAccess.DeleteDealAlarm(1);
+
+            //场景状态自动落盘：显示名/标签列表/当前标签写入 scenarios.json（无弹窗）
+            try
+            {
+                DBAccess.ScenarioManager.SaveStateJson();
+            }
+            catch { }
         }
     }
 

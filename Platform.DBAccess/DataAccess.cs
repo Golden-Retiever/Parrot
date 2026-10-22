@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Platform.DataEntities;
 using System;
 using System.Collections.Generic;
@@ -65,7 +65,7 @@ namespace Platform.DBAccess
         public List<DeviceEntity> GetDevices()
         {
             //每次都是新 context，不跟踪旧实体，不再需要 ChangeTracker.Clear()
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.Devices.ToList();
         }
 
@@ -80,7 +80,7 @@ namespace Platform.DBAccess
         /// <returns>保存是否成功</returns>
         public bool SaveDevice(List<DeviceEntity> deviceList, List<DevicePropEntity> devicePropList = null, List<DeviceVarEntity> deviceVarList = null, List<ManualControlEntity> manualControlList = null, List<VarAlarmConfEntity> varAlarmConfList = null)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             try
             {
                 #region 保存设备基本信息
@@ -156,7 +156,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<DevicePropEntity> GetDeviceProps()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.DeviceProps.ToList();
         }
 
@@ -166,7 +166,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<DeviceVarEntity> GetDeviceVarList()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.DeviceVars.ToList();
         }
 
@@ -176,7 +176,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<ManualControlEntity> GetManualControlList()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.ManualControls.ToList();
         }
 
@@ -186,7 +186,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<VarAlarmConfEntity> GetVarAlarmConfList()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.VarAlarmConfs.ToList();
         }
 
@@ -196,7 +196,7 @@ namespace Platform.DBAccess
         /// <param name="deviceAlarmEntity">设备报警信息</param>
         public void SaveDeviceAlarm(DeviceAlarmEntity deviceAlarmEntity)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             ctx.DeviceAlarms.Add(deviceAlarmEntity);
 
             ctx.SaveChanges();
@@ -208,7 +208,7 @@ namespace Platform.DBAccess
         /// <param name="monitorRecordList">监控数据集合</param>
         public void SaveMonitorRecords(List<MonitorRecordEntity> monitorRecordList)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             ctx.MonitorRecords.AddRange(monitorRecordList);
 
             ctx.SaveChanges();
@@ -220,7 +220,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<SevenPowerEntity> GetSevenPowerList()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.SevenPowers.ToList();
         }
 
@@ -230,7 +230,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<SevenAirEntity> GetSevenAirList()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.SevenAirs.ToList();
         }
 
@@ -240,7 +240,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<SevenLeakEntity> GetSevenLeakList()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.SevenLeaks.ToList();
         }
 
@@ -250,7 +250,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<DeviceWarningEntity> GetDeviceWarnings()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.DeviceWarnings.ToList();
         }
 
@@ -260,7 +260,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<AirRankingEntity> GetAirRankings()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.AirRankings.ToList();
         }
 
@@ -273,7 +273,7 @@ namespace Platform.DBAccess
         /// <param name="seriesList">序列集合</param>
         public void SaveTrend(List<TrendEntity> trendList, List<TrendAxisEntity>? axisList = null, List<TrendSectionEntity>? sectionList = null, List<TrendSeriesEntity>? seriesList = null)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
 
             //保存趋势
             ctx.Trends.RemoveRange(ctx.Trends);
@@ -308,7 +308,7 @@ namespace Platform.DBAccess
         /// </summary>
         public List<TrendEntity> GetTrends()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.Trends.ToList();
         }
 
@@ -317,7 +317,7 @@ namespace Platform.DBAccess
         /// </summary>
         public List<TrendAxisEntity> GetTrendAxises()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.TrendAxises.ToList();
         }
 
@@ -326,7 +326,7 @@ namespace Platform.DBAccess
         /// </summary>
         public List<TrendSectionEntity> GetTrendSections()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.TrendSections.ToList();
         }
 
@@ -335,7 +335,7 @@ namespace Platform.DBAccess
         /// </summary>
         public List<TrendSeriesEntity> GetTrendSerieses()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.TrendSerieses.ToList();
         }
 
@@ -346,7 +346,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<DeviceAlarmEntity> GetDeviceAlarmList(string keyWord)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             if (string.IsNullOrEmpty(keyWord))
             {
                 return ctx.DeviceAlarms.OrderByDescending(a => a.RecordTime).ToList();//根据记录时间降序
@@ -364,7 +364,7 @@ namespace Platform.DBAccess
         /// <param name="solveTime">解决时间</param>
         public void HandleAlarmState(string alarNum, DateTime solveTime)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             var alarm = ctx.DeviceAlarms.FirstOrDefault(t => t.AlarmNum == alarNum);
             if (alarm != null)
             {
@@ -380,7 +380,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<MonitorRecordEntity> GetMonitorRecords()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.MonitorRecords.ToList();
         }
 
@@ -390,7 +390,7 @@ namespace Platform.DBAccess
         /// <returns></returns>
         public List<MonitorSettingEntity> GetMonitorSettings()
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             return ctx.MonitorSettings.ToList();
         }
 
@@ -400,7 +400,7 @@ namespace Platform.DBAccess
         /// <param name="monitorSettingList"></param>
         public void SaveMonitorSets(List<MonitorSettingEntity> monitorSettingList)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             if (monitorSettingList != null)
             {
                 ctx.MonitorSettings.RemoveRange(ctx.MonitorSettings);
@@ -436,7 +436,7 @@ namespace Platform.DBAccess
 
         public void DeleteDealAlarm(int state)
         {
-            using var ctx = new AppContext();
+            using var ctx = new ScenarioContext();
             var alarm = ctx.DeviceAlarms;
             int count = alarm.Count();
             if (count == 0) return;

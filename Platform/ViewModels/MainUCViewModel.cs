@@ -1,4 +1,5 @@
 ﻿using LiveCharts;
+using Microsoft.Win32;
 using Platform.DataEntities;
 using Platform.DBAccess;
 using Platform.DeviceAccess;
@@ -11,6 +12,7 @@ using Platform.Models;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,7 +23,7 @@ namespace Platform.ViewModels
     {
         ILoggerService<MainUCViewModel> _loggerService;
 
-        private IDataAccess _dataAccess;//数据访问
+        private IDataAccess _dataAccess; /* 数据访问 */
 
         /// <summary>
         /// 登录成功的用户信息
@@ -38,7 +40,8 @@ namespace Platform.ViewModels
             
             //主题初始化
             ThemeHelper.Apply(_dataAccess.GetSetting()?.Theme ?? "");
-            
+
+            InitScenarioTabs();//恢复上次的场景标签列表(多场景:一个场景一个db文件)
             InitMenu();//左侧菜单初始化
             InitHadDevices();//初始化设备
             InitSevenPower();//初始化7日耗电量
@@ -118,7 +121,7 @@ namespace Platform.ViewModels
         #endregion
 
         #region 左侧菜单
-        private UserControl _viewFunc;//右侧功能对象
+        private UserControl _viewFunc; /* 正在显示的功能页(UserControl 类型)， 244 行使用 */
 
         public UserControl ViewFunc
         {
@@ -136,7 +139,7 @@ namespace Platform.ViewModels
         /// </summary>
         private void InitMenu()
         {
-            //_loggerService.Info("左侧初始化菜单123");
+            //_loggerService.Info("左侧初始化菜单");
             MenuList =
                 [
                     new MenuModel{  IsSelected=true, MenuName="监控", MenuIcon="\ue639",TargetFunc="MonitorUC"},
@@ -146,7 +149,7 @@ namespace Platform.ViewModels
                     new MenuModel{  MenuName="配置", MenuIcon="\ue60f",TargetFunc="SettingsUC"},
                 ];
 
-            DoSwitchFunc(MenuList[0]);//默认第一个功能
+            DoSwitchFunc(MenuList[0]); /* 默认第一个功能 */
         }
 
         //切换功能命令
@@ -158,26 +161,18 @@ namespace Platform.ViewModels
         /// <param name="menuModel"></param>
         private void DoSwitchFunc(MenuModel menuModel)
         {
-            //1、只针对该功能实现
-            //2、代码优化（封装） 后面 弹出窗体，在窗体上面有操作 dialogresult
-
-            //如果不是管理员(一级/二级都放行)，并且不是监控功能
+            /* 非管理员(一级/二级)，且非监控功能 */
             if (LoginUserModel.Role == 0 && menuModel.TargetFunc != "MonitorUC")
             {
-                MenuList[0].IsSelected = true;//没有权限，默认还是选择监控功能
+                MenuList[0].IsSelected = true; /* 没有权限，默认选择监控功能 */
                 if (ActionHelper.ExecuteAndResult<object>("ShowRight", null))
                 {
-                    //重新登录
-                    DoReLogin();
+                    DoReLogin(); /* 重新登录 */
                 }
             }
             else
             {
-                //和之前点击的功能是一样的，就不用再执行
-                if (ViewFunc != null && ViewFunc.GetType().Name == menuModel.TargetFunc)
-                {
-                    return;
-                }
+                if (ViewFunc != null && ViewFunc.GetType().Name == menuModel.TargetFunc) return; /* 和之前点击功能一样，不再执行 */
                 Type type = Assembly.Load("Platform").GetType("Platform.Views.FunctionUC." + menuModel.TargetFunc)!;
                 ViewFunc = Activator.CreateInstance(type) as UserControl;
             }
@@ -230,6 +225,423 @@ namespace Platform.ViewModels
         }
         #endregion
 
+        #region 场景管理(多场景:一个场景一个db文件,顶栏标签页切换)
+        /// <summary>
+        /// 场景标签集合(顶栏标签条)
+        /// </summary>
+        public ObservableCollection<ScenarioTabModel> ScenarioTabs { get; set; } = new ObservableCollection<ScenarioTabModel>();
+
+        /// <summary>
+        /// 场景清单(侧栏"场景"菜单里的打开列表)
+        /// </summary>
+        public List<ScenarioInfoModel> AllScenarioList { get; set; } = new List<ScenarioInfoModel>();
+
+        /// <summary>
+        /// 全部标签关闭后显示引导页
+        /// </summary>
+        public bool ShowScenarioGuide => ScenarioTabs.Count == 0;
+
+        /// <summary>
+        /// 初始化场景标签:恢复上次的标签列表和当前场景
+        /// </summary>
+        private void InitScenarioTabs()
+        {
+            ScenarioTabs.Clear();
+            foreach (var (fileName, displayName) in ScenarioManager.GetOpenTabs())
+            {
+                ScenarioTabs.Add(new ScenarioTabModel
+                {
+                    FileName = fileName,
+                    DisplayName = displayName,
+                    IsCurrent = fileName == ScenarioManager.CurrentTabFileName,
+                });
+            }
+            RefreshAllScenarioList();
+            RaisePropertyChanged(nameof(ShowScenarioGuide));
+        }
+
+        /// <summary>
+        /// 刷新侧栏场景菜单的清单列表
+        /// </summary>
+        private void RefreshAllScenarioList()
+        {
+            AllScenarioList = ScenarioManager.GetScenarioList()
+                .Select(s => new ScenarioInfoModel { FileName = s.FileName, DisplayName = s.DisplayName })
+                .ToList();
+            RaisePropertyChanged(nameof(AllScenarioList));
+        }
+
+        /// <summary>
+        /// 刷新标签激活状态(代码切换当前场景后)
+        /// </summary>
+        private void RefreshTabCurrentState()
+        {
+            foreach (var tab in ScenarioTabs)
+            {
+                tab.IsCurrent = tab.FileName == ScenarioManager.CurrentTabFileName;
+            }
+            RaisePropertyChanged(nameof(ShowScenarioGuide));
+        }
+
+        /// <summary>
+        /// 切换标签命令(点标签页)
+        /// </summary>
+        public DelegateCommand<ScenarioTabModel> SwitchTabCommand => new DelegateCommand<ScenarioTabModel>(DoSwitchTab);
+
+        /// <summary>
+        /// 关闭标签命令(点❌/右键关闭:仅关视图不删文件,无弹窗)
+        /// </summary>
+        public DelegateCommand<ScenarioTabModel> CloseTabCommand => new DelegateCommand<ScenarioTabModel>(DoCloseTab);
+
+        /// <summary>
+        /// 全部关闭命令(右键菜单)
+        /// </summary>
+        public DelegateCommand CloseAllTabsCommand => new DelegateCommand(DoCloseAllTabs);
+
+        /// <summary>
+        /// 重命名命令(右键改名,只改显示名)
+        /// </summary>
+        public DelegateCommand<ScenarioTabModel> RenameTabCommand => new DelegateCommand<ScenarioTabModel>(DoRenameTab);
+
+        /// <summary>
+        /// 删除场景命令(右键删除:从清单移除并删掉场景库文件)
+        /// </summary>
+        public DelegateCommand<ScenarioTabModel> DeleteTabCommand => new DelegateCommand<ScenarioTabModel>(DoDeleteTab);
+
+        /// <summary>
+        /// 新建场景命令(侧栏场景菜单/引导页)
+        /// </summary>
+        public DelegateCommand NewScenarioCommand => new DelegateCommand(DoNewScenario);
+
+        /// <summary>
+        /// 打开已有场景命令(侧栏清单项,参数=文件名)
+        /// </summary>
+        public DelegateCommand<string> OpenScenarioCommand => new DelegateCommand<string>(DoOpenScenario);
+
+        /// <summary>
+        /// 导入场景命令(选外部.db复制进Scenarios)
+        /// </summary>
+        public DelegateCommand ImportScenarioCommand => new DelegateCommand(DoImportScenario);
+
+        /// <summary>
+        /// 导出当前场景命令(另存到任意位置)
+        /// </summary>
+        public DelegateCommand ExportScenarioCommand => new DelegateCommand(DoExportScenario);
+
+        /// <summary>
+        /// 切换标签:先停旧场景监控(单连接模型),换库,重跑初始化
+        /// 守卫不能用 tab.IsCurrent(点击时 TwoWay 绑定已把它置 true,命令后执行会误判),
+        /// 要跟 ScenarioManager 里的当前标签比
+        /// </summary>
+        private void DoSwitchTab(ScenarioTabModel tab)
+        {
+            if (tab == null || tab.FileName == ScenarioManager.CurrentTabFileName) return;
+
+            StopMonitor();
+            ScenarioManager.SetCurrentTab(tab.FileName);
+            RefreshTabCurrentState();
+            ReloadScenarioData();
+        }
+
+        /// <summary>
+        /// 删除标签(右键):从清单移除并删掉该场景的数据库文件(.db/-wal/-shm)。
+        /// 删的是当前场景时自动退到剩余第一个标签(没有则引导页),全程无确认弹窗
+        /// </summary>
+        private void DoDeleteTab(ScenarioTabModel tab)
+        {
+            if (tab == null) return;
+
+            bool wasCurrent = tab.FileName == ScenarioManager.CurrentTabFileName;
+            if (wasCurrent) StopMonitor();//防止监控还在读写要删的库
+
+            bool fileGone = ScenarioManager.DeleteScenario(tab.FileName);
+            ScenarioTabs.Remove(tab);
+
+            if (wasCurrent)
+            {
+                if (ScenarioManager.CurrentTabFileName != null)
+                    ReloadScenarioData();
+                else
+                    ClearScenarioData();
+            }
+
+            RefreshTabCurrentState();
+            RefreshAllScenarioList();
+
+            if (!fileGone)
+                MessageBox.Show("场景已从清单移除，但数据库文件被占用暂时无法删除，可重启程序后再删 Scenarios 目录下的该文件",
+                    "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        /// <summary>
+        /// 关闭标签:关的是当前标签时退到剩余第一个;全关完显示引导页。
+        /// 命名/列表随关闭自动落盘,全程无确认弹窗
+        /// </summary>
+        private void DoCloseTab(ScenarioTabModel tab)
+        {
+            if (tab == null) return;
+
+            bool wasCurrent = tab.IsCurrent;
+            ScenarioTabs.Remove(tab);
+            ScenarioManager.RemoveOpenTab(tab.FileName);
+
+            if (wasCurrent)
+            {
+                StopMonitor();
+                var next = ScenarioTabs.FirstOrDefault();
+                if (next != null)
+                {
+                    ScenarioManager.SetCurrentTab(next.FileName);
+                    ReloadScenarioData();
+                }
+                else
+                {
+                    ClearScenarioData();
+                }
+            }
+
+            ScenarioManager.SaveStateJson();
+            RefreshTabCurrentState();
+            RefreshAllScenarioList();
+        }
+
+        /// <summary>
+        /// 全部关闭:停监控+清数据+落盘
+        /// </summary>
+        private void DoCloseAllTabs()
+        {
+            if (ScenarioTabs.Count == 0) return;
+
+            StopMonitor();
+            ScenarioTabs.Clear();
+            foreach (string fileName in ScenarioManager.GetOpenTabs().Select(t => t.FileName).ToList())
+            {
+                ScenarioManager.RemoveOpenTab(fileName);
+            }
+            ClearScenarioData();
+            ScenarioManager.SaveStateJson();
+            RefreshAllScenarioList();
+        }
+
+        /// <summary>
+        /// 右键改名:弹命名窗(预填旧名),确认后改显示名并落盘
+        /// </summary>
+        private void DoRenameTab(ScenarioTabModel tab)
+        {
+            if (tab == null) return;
+
+            var payload = new ScenarioNamePayload { Title = "场景重命名", InitialName = tab.DisplayName };
+            if (!ActionHelper.ExecuteAndResult<object>("ScenarioName", payload)) return;//取消
+            if (string.IsNullOrWhiteSpace(payload.ResultName)) return;
+
+            ScenarioManager.RenameScenario(tab.FileName, payload.ResultName);
+            tab.DisplayName = payload.ResultName;//标签立即显示新名
+            ScenarioManager.SaveStateJson();
+            RefreshAllScenarioList();
+        }
+
+        /// <summary>
+        /// 新建场景:命名→EnsureCreated建库→入清单→开标签并切换(上限6)
+        /// </summary>
+        private void DoNewScenario()
+        {
+            if (ScenarioTabs.Count >= ScenarioManager.MaxTabCount)
+            {
+                MessageBox.Show($"同时最多打开 {ScenarioManager.MaxTabCount} 个标签页，请先关闭一个", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var payload = new ScenarioNamePayload { Title = "新建场景" };
+            if (!ActionHelper.ExecuteAndResult<object>("ScenarioName", payload)) return;//取消
+            if (string.IsNullOrWhiteSpace(payload.ResultName)) return;
+
+            if (ScenarioManager.DisplayNameExists(payload.ResultName))
+            {
+                if (MessageBox.Show($"已存在名为“{payload.ResultName}”的场景，仍要继续创建吗？", "提示", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                    return;
+            }
+
+            try
+            {
+                StopMonitor();
+                string fileName = ScenarioManager.NewScenario(payload.ResultName);
+                ScenarioTabs.Add(new ScenarioTabModel { FileName = fileName, DisplayName = payload.ResultName, IsCurrent = true });
+                ReloadScenarioData();
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"新建场景失败:{ex.Message}", ex);
+                MessageBox.Show("新建场景失败：" + ex.Message, "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 打开清单里的已有场景(已打开的仅激活,未打开的检查上限后开标签)
+        /// </summary>
+        private void DoOpenScenario(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return;
+
+            var existing = ScenarioTabs.FirstOrDefault(t => t.FileName == fileName);
+            if (existing != null)
+            {
+                DoSwitchTab(existing);
+                return;
+            }
+
+            if (ScenarioTabs.Count >= ScenarioManager.MaxTabCount)
+            {
+                MessageBox.Show($"同时最多打开 {ScenarioManager.MaxTabCount} 个标签页，请先关闭一个", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                StopMonitor();
+                ScenarioManager.OpenScenario(fileName);
+                //元组是值类型:FirstOrDefault找不到返回default(null,null),??兜底
+                string displayName = ScenarioManager.GetScenarioList()
+                    .FirstOrDefault(s => s.FileName == fileName).DisplayName ?? Path.GetFileNameWithoutExtension(fileName);
+                ScenarioTabs.Add(new ScenarioTabModel { FileName = fileName, DisplayName = displayName, IsCurrent = true });
+                ReloadScenarioData();
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"打开场景失败:{ex.Message}", ex);
+                MessageBox.Show("打开场景失败：" + ex.Message, "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 导入场景:选外部.db,checkpoint后复制进Scenarios(同名自动加后缀)
+        /// </summary>
+        private void DoImportScenario()
+        {
+            if (ScenarioTabs.Count >= ScenarioManager.MaxTabCount)
+            {
+                MessageBox.Show($"同时最多打开 {ScenarioManager.MaxTabCount} 个标签页，请先关闭一个", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new OpenFileDialog
+            {
+                Title = "导入场景",
+                Filter = "场景文件|*.db|所有文件|*.*",
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                StopMonitor();
+                var (fileName, renamed) = ScenarioManager.ImportScenario(dlg.FileName);
+                if (renamed)
+                {
+                    MessageBox.Show($"已存在同名场景文件，导入后重命名为“{Path.GetFileNameWithoutExtension(fileName)}”", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                ScenarioTabs.Add(new ScenarioTabModel
+                {
+                    FileName = fileName,
+                    DisplayName = Path.GetFileNameWithoutExtension(fileName),
+                    IsCurrent = true,
+                });
+                ReloadScenarioData();
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"导入场景失败:{ex.Message}", ex);
+                MessageBox.Show("导入场景失败：" + ex.Message, "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 导出当前激活场景(另存到任意位置)
+        /// </summary>
+        private void DoExportScenario()
+        {
+            string? currentFile = ScenarioManager.CurrentTabFileName;
+            if (string.IsNullOrEmpty(currentFile))
+            {
+                MessageBox.Show("当前没有打开的场景", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var currentTab = ScenarioTabs.FirstOrDefault(t => t.IsCurrent);
+            string displayName = currentTab?.DisplayName ?? Path.GetFileNameWithoutExtension(currentFile);
+            var dlg = new SaveFileDialog
+            {
+                Title = "导出场景",
+                Filter = "场景文件|*.db",
+                FileName = displayName + ".db",
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                ScenarioManager.ExportScenario(currentFile, dlg.FileName);
+                MessageBox.Show("导出成功：" + dlg.FileName, "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"导出场景失败:{ex.Message}", ex);
+                MessageBox.Show("导出场景失败：" + ex.Message, "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 重载场景数据:切场景/新建/导入后调用——
+        /// 清旧场景界面数据,重跑全部初始化(设备/能耗/提醒/监控配置),重建取消器并重启监控
+        /// </summary>
+        private void ReloadScenarioData()
+        {
+            //清空随场景走的数据(Init*是追加式,不清会叠加)
+            ClearEnergyCharts();
+            DeviceWarningList = new List<DeviceWarningModel>();
+            AirRankingList = new List<AirRankingModel>();
+
+            InitHadDevices();
+            InitSevenPower();
+            InitSevenAir();
+            InitSevenLeak();
+            InitAirRanking();
+            InitDeviceWarning();
+            InitMonitorSettingVar();
+            RefreshTabCurrentState();
+            RefreshAllScenarioList();
+
+            cts = new CancellationTokenSource();
+            Monitor();
+        }
+
+        /// <summary>
+        /// 清空当前场景的界面数据(全部标签关闭时)
+        /// </summary>
+        private void ClearScenarioData()
+        {
+            DeviceList = new ObservableCollection<DeviceModel>();
+            DeviceWarningList = new List<DeviceWarningModel>();
+            AirRankingList = new List<AirRankingModel>();
+            TemperatureVar = null;
+            HumidityVar = null;
+            PM25Var = null;
+            PressureVar = null;
+            FlowRateVar = null;
+            ClearEnergyCharts();
+        }
+
+        /// <summary>
+        /// 清空三张7日能耗图表数据(Init*是追加式,重跑前必须清)
+        /// </summary>
+        private void ClearEnergyCharts()
+        {
+            PowerLineLabels.Clear();
+            PowerLineValues.Clear();
+            AirLineLabels.Clear();
+            AirLineValues.Clear();
+            LeakLineLabels.Clear();
+            LeakLineValues.Clear();
+        }
+        #endregion
+
         #region 打开编辑窗口
         /// <summary>
         /// 打开编辑命令
@@ -245,33 +657,14 @@ namespace Platform.ViewModels
             {
                 this.ViewBlur = 5;//默认模糊
 
-
                 //====进编辑界面立即停(轮询+循环写全部取消,编辑期间不对设备读写)====//
-                cts.Cancel();
-                //等待所有task退出
-                Task.WaitAll(taskList.ToArray(),3000);
-                taskList.Clear();
-                //订阅式:摘除推送回调
-                foreach (var (push, handler) in _pushHandlers)
-                {
-                    push.MessageReceived -= handler;
-                }
-                _pushHandlers.Clear();
-                //运行连接一并清空:手动写在监控外不可用
-                _runEos.Clear();
-
+                StopMonitor();
 
                 //====打开编辑窗(返回true=保存了配置,false=取消;两种情况都重启监控)====//
                 ActionHelper.ExecuteAndResult<object>("ComponentsEdit", null);
-                
 
                 //====出编辑界面重启(保存了用新配置,取消了用原配置,都重新来)====//
-                //重新实例一个取消发生器
-                cts = new CancellationTokenSource();
-                //初始化设备
-                InitHadDevices();
-                //直接连接PLC设备监控
-                Monitor();
+                RestartMonitor();
 
                 this.ViewBlur = 0;//变清晰
             }
@@ -284,6 +677,39 @@ namespace Platform.ViewModels
                     DoReLogin();
                 }
             }
+        }
+        #endregion
+
+        #region 监控启停(编辑窗/场景切换共用)
+        /// <summary>
+        /// 停止监控:取消轮询+循环写,摘除推送回调,清空运行连接
+        /// (进编辑窗/切换场景/关闭标签页共用)
+        /// </summary>
+        private void StopMonitor()
+        {
+            cts.Cancel();
+            //等待所有task退出(任务进入取消态属正常,不视为失败)
+            try { Task.WaitAll(taskList.ToArray(), 3000); }
+            catch (AggregateException) { }
+            taskList.Clear();
+            //订阅式:摘除推送回调
+            foreach (var (push, handler) in _pushHandlers)
+            {
+                push.MessageReceived -= handler;
+            }
+            _pushHandlers.Clear();
+            //运行连接一并清空:手动写在监控外不可用
+            _runEos.Clear();
+        }
+
+        /// <summary>
+        /// 重启监控:重建取消发生器+重载设备+连接监控(出编辑窗时用)
+        /// </summary>
+        private void RestartMonitor()
+        {
+            cts = new CancellationTokenSource();
+            InitHadDevices();
+            Monitor();
         }
         #endregion
 

@@ -21,13 +21,13 @@ namespace Platform.ViewModels.FunctionUC
         /// 构造函数
         /// </summary>
         /// <param name="dataAccess"></param>
-        /// <param name="mainUCViewModel">因为需要设备集合。</param>
+        /// <param name="mainUCViewModel"></param>
         public SettingsUCViewModel(IDataAccess dataAccess, MainUCViewModel mainUCViewModel)
         {
             _dataAccess = dataAccess;
-            _myRole = mainUCViewModel.LoginUserModel?.Role ?? 0;//当前登录者角色:升降级/删除的权限判据
+            _myRole = mainUCViewModel.LoginUserModel?.Role ?? 0; /* 当前登录者角色:升降级/删除的权限判据 */
             
-            //配置主题
+            /* 配置主题 */
             Setting.Theme = ThemeHelper.CurrentTheme;
             Setting.PropertyChanged += (s, e) =>
             {
@@ -35,12 +35,9 @@ namespace Platform.ViewModels.FunctionUC
                     ThemeHelper.Apply(Setting.Theme);
             };
 
-            //可以选择的设备集合(必须要有变量)
-            CanSelectedList = mainUCViewModel.DeviceList.Where(d => d.DeviceVarList.Count > 0).ToList();
-            //初始化监控配置
-            InitMonitorSetting();
-            //初始化用户信息
-            InitUsers();
+            CanSelectedList = mainUCViewModel.DeviceList.Where(d => d.DeviceVarList.Count > 0).ToList(); /* 可以选择的设备集合(必须要有变量) */          
+            InitMonitorSetting(); /* 初始化监控配置 */        
+            InitUsers();          /* 初始化用户信息 */
         }
 
         #region 监控配置
